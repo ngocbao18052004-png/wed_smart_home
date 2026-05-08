@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Giám Sát Khuôn Mặt AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">AI Vision Security</p>
+                <h1>Hệ thống giám sát khuôn mặt</h1>
+                <p class="description">
+                    Theo dõi camera theo chỉ số thiết bị, nhận diện người quen từ dataset
+                    và phát cảnh báo ngay khi xuất hiện người lạ trong vùng quan sát.
+                </p>
+            </div>
+            <div class="hero-card">
+                <span class="hero-label">Trạng thái hệ thống</span>
+                <strong id="heroAlertTitle">Đang chờ kích hoạt</strong>
+                <p id="heroAlertText">Kết nối camera để bắt đầu giám sát.</p>
+            </div>
+        </section>
+
+        <section class="dashboard">
+            <section class="panel panel-main">
+                <div class="section-head">
+                    <div>
+                        <p class="section-tag">Điều khiển camera</p>
+                        <h2>Truyền hình ảnh thời gian thực</h2>
+                    </div>
+                    <div class="metrics">
+                        <article class="metric-card">
+                            <span>FPS hiện tại</span>
+                            <strong id="fpsValue">0.0</strong>
+                        </article>
+                        <article class="metric-card">
+                            <span>Khuôn mặt đã đăng ký</span>
+                            <strong id="knownFacesValue">0</strong>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <label for="cameraIndex">Chỉ số camera</label>
+                    <div class="row">
+                        <input id="cameraIndex" type="number" min="0" step="1" value="0" />
+                        <button id="startBtn" type="button">Mở camera</button>
+                        <button id="stopBtn" type="button" class="secondary">Tắt camera</button>
+                    </div>
+                </div>
+
+                <p id="status" class="status">Chưa mở camera.</p>
+
+                <div class="video-shell">
+                    <div class="video-overlay">
+                        <span class="live-dot"></span>
+                        <span>Luồng camera trực tiếp</span>
+                    </div>
+                    <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Luồng video camera" />
+                </div>
+            </section>
+
+            <aside class="panel panel-side">
+                <div id="alertPanel" class="alert-panel alert-idle">
+                    <p class="section-tag">Phân tích an ninh</p>
+                    <h3 id="alertTitle">Đang chờ hệ thống</h3>
+                    <p id="alertMessage">Chưa phát hiện khuôn mặt và chưa khởi động camera.</p>
+                </div>
+
+                <div class="info-grid">
+                    <article class="info-card">
+                        <span>Chế độ cảnh báo</span>
+                        <strong id="alertLevelText">Chờ kích hoạt</strong>
+                    </article>
+                    <article class="info-card">
+                        <span>Camera hiện tại</span>
+                        <strong id="cameraIndexValue">-</strong>
+                    </article>
+                </div>
+
+                <div class="recognized-panel">
+                    <div class="recognized-head">
+                        <p class="section-tag">Nhận diện gần nhất</p>
+                        <span id="recognizedBadge" class="badge badge-neutral">Chưa có dữ liệu</span>
+                    </div>
+                    <div id="recognizedContent" class="recognized-content">
+                        Chưa có khuôn mặt nào được nhận diện.
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        const statusEl = document.getElementById("status");
+        const cameraIndexEl = document.getElementById("cameraIndex");
+        const videoFeedEl = document.getElementById("videoFeed");
+        const fpsValueEl = document.getElementById("fpsValue");
+        const knownFacesValueEl = document.getElementById("knownFacesValue");
+        const alertPanelEl = document.getElementById("alertPanel");
+        const alertTitleEl = document.getElementById("alertTitle");
+        const alertMessageEl = document.getElementById("alertMessage");
+        const alertLevelTextEl = document.getElementById("alertLevelText");
+        const cameraIndexValueEl = document.getElementById("cameraIndexValue");
+        const recognizedContentEl = document.getElementById("recognizedContent");
+        const recognizedBadgeEl = document.getElementById("recognizedBadge");
+        const heroAlertTitleEl = document.getElementById("heroAlertTitle");
+        const heroAlertTextEl = document.getElementById("heroAlertText");
+
+        const alertMap = {
+            idle: {
+                title: "Đang chờ hệ thống",
+                levelText: "Chờ kích hoạt",
+                badge: "Chưa có dữ liệu",
+                panelClass: "alert-idle"
+            },
+            monitoring: {
+                title: "Đang giám sát",
+                levelText: "Theo dõi",
+                badge: "Đang quét",
+                panelClass: "alert-monitoring"
+            },
+            safe: {
+                title: "An toàn",
+                levelText: "Người quen",
+                badge: "An toàn",
+                panelClass: "alert-safe"
+            },
+            danger: {
+                title: "Phát hiện người lạ",
+                levelText: "Cảnh báo cao",
+                badge: "Người lạ",
+                panelClass: "alert-danger"
+            },
+            error: {
+                title: "Lỗi hệ thống",
+                levelText: "Gián đoạn",
+                badge: "Lỗi",
+                panelClass: "alert-error"
+            }
+        };
+
+        async function sendRequest(url, payload = {}) {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            statusEl.textContent = data.message;
+            statusEl.classList.toggle("error", !data.ok);
+
+            if (!data.ok) {
+                throw new Error(data.message);
+            }
+        }
+
+        function renderStatus(data) {
+            const level = data.alert_level || "idle";
+            const config = alertMap[level] || alertMap.idle;
+
+            fpsValueEl.textContent = (data.fps ?? 0).toFixed(1);
+            knownFacesValueEl.textContent = data.known_faces ?? 0;
+            cameraIndexValueEl.textContent = data.camera_running ? (data.camera_index ?? 0) : "-";
+            statusEl.textContent = data.status_text || "Hệ thống đang chờ.";
+            statusEl.classList.toggle("error", level === "danger" || level === "error");
+
+            alertPanelEl.className = "alert-panel " + config.panelClass;
+            alertTitleEl.textContent = config.title;
+            alertMessageEl.textContent = data.alert_text || "Đang chờ dữ liệu từ hệ thống.";
+            alertLevelTextEl.textContent = config.levelText;
+            recognizedBadgeEl.textContent = config.badge;
+            recognizedBadgeEl.className = "badge " + (
+                level === "safe" ? "badge-safe" :
+                level === "danger" ? "badge-danger" :
+                level === "error" ? "badge-error" :
+                "badge-neutral"
+            );
+
+            heroAlertTitleEl.textContent = config.title;
+            heroAlertTextEl.textContent = data.alert_text || "Kết nối camera để bắt đầu giám sát.";
+
+            if (level === "safe" && Array.isArray(data.recognized_names) && data.recognized_names.length) {
+                const uniqueNames = [...new Set(data.recognized_names)];
+                recognizedContentEl.textContent = "Đã xác thực: " + uniqueNames.join(", ");
+            } else if (level === "danger") {
+                recognizedContentEl.textContent = `Có ${data.unknown_count || 0} người lạ xuất hiện trong vùng theo dõi.`;
+            } else if (level === "monitoring") {
+                recognizedContentEl.textContent = "Hệ thống đang quét khuôn mặt trong khung hình.";
+            } else if (level === "error") {
+                recognizedContentEl.textContent = "Luồng giám sát đang gặp lỗi, vui lòng kiểm tra camera.";
+            } else {
+                recognizedContentEl.textContent = "Chưa có khuôn mặt nào được nhận diện.";
+            }
+        }
+
+        async function refreshDashboard() {
+            try {
+                const response = await fetch("/health");
+                const data = await response.json();
+                renderStatus(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        document.getElementById("startBtn").addEventListener("click", async () => {
+            const cameraIndex = cameraIndexEl.value || 0;
+            try {
+                await sendRequest("/start_camera", { camera_index: cameraIndex });
+                videoFeedEl.src = "{{ url_for('video_feed') }}?t=" + Date.now();
+                refreshDashboard();
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+        document.getElementById("stopBtn").addEventListener("click", async () => {
+            try {
+                await sendRequest("/stop_camera");
+                videoFeedEl.src = "{{ url_for('video_feed') }}?t=" + Date.now();
+                refreshDashboard();
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+        refreshDashboard();
+        setInterval(refreshDashboard, 1000);
+    </script>
+</body>
+</html>

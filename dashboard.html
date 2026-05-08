@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard SmartHome</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-brand">
+                <img src="ute_logo_color.png" class="logo-header">
+                <h1>SMART HOME CENTER</h1>
+            </div>
+            <div id="user-info">
+                <span id="display-name">---</span> | 
+                <a href="login.html" onclick="localStorage.removeItem('currentUser')">Đăng xuất</a>
+                <button class="admin-shortcut" id="admin-shortcut" data-target="admin-panel" style="display:none;">Admin</button>
+            </div>
+        </header>
+
+        <div class="breadcrumb" id="breadcrumb">Trang chủ / Tổng quan</div>
+
+        <div class="tab-menu">
+            <button class="tab-btn active" data-target="home-card" data-label="Tổng quan">Trang chủ</button>
+            <button class="tab-btn" data-target="device-card" data-label="Điều Khiển Thiết Bị">Thiết Bị</button>
+            <button class="tab-btn" data-target="env-card" data-label="Giám Sát Cảm Biến">Giám Sát Cảm Biến</button>
+            <button class="tab-btn" data-target="security-card" data-label="An Ninh">An Ninh</button>
+            <button class="tab-btn" data-target="energy-card" data-label="Năng Lượng">Năng lượng</button>
+            <button class="tab-btn" data-target="automation-card" data-label="Tự động hóa">Tự động hóa</button>
+            <button class="tab-btn" data-target="history-card" data-label="Lịch sử">Lịch sử</button>
+            <button class="tab-btn" data-target="alerts-card" data-label="Cảnh báo">Cảnh báo</button>
+            <button class="tab-btn" data-target="rooms-card" data-label="Phòng">Phòng</button>
+            <button class="tab-btn" data-target="admin-panel" data-label="Quản Trị">Quản Trị</button>
+        </div>
+
+        <div class="cards-grid">
+            <section class="card tab-panel active" id="home-card">
+                <div class="home-header">
+                    <div>
+                        <h2>Trang chủ</h2>
+                        <p class="home-subtitle">Tổng quan, trạng thái hệ thống và sự kiện gần đây.</p>
+                    </div>
+                    <div class="alert-pill">🛈 Hệ thống ổn định. Không có cảnh báo khẩn cấp.</div>
+                </div>
+
+                <div class="home-summary-grid">
+                    <div class="home-pill"><span>Nhiệt độ</span><strong>--°C</strong></div>
+                    <div class="home-pill"><span>Độ ẩm</span><strong>--%</strong></div>
+                    <div class="home-pill"><span>Khí gas</span><strong>-- ppm</strong></div>
+                    <div class="home-pill"><span>Camera</span><strong>Online</strong></div>
+                    <div class="home-pill"><span>Thiết bị</span><strong>6/8</strong></div>
+                </div>
+
+                <div class="home-main-grid">
+                    <div class="home-card-small">
+                        <div class="home-card-title"><span>📊</span> Tổng quan</div>
+                        <p>Hiển thị trạng thái chung của thiết bị, cảm biến và kết nối hệ thống.</p>
+                    </div>
+                    <div class="home-card-small">
+                        <div class="home-card-title"><span>⚙️</span> Trạng thái hệ thống</div>
+                        <p>Kiểm tra kết nối MQTT, camera và mức độ hoạt động của các module.</p>
+                    </div>
+                    <div class="home-card-small">
+                        <div class="home-card-title"><span>🕒</span> Sự kiện gần đây</div>
+                        <p>Các hoạt động và cảnh báo mới nhất được ghi nhận trong ngày.</p>
+                    </div>
+                </div>
+
+                <div class="home-welcome">
+                    <div class="home-welcome-top">
+                        <div>
+                            <div class="calendar-month">Tháng 5, 2026</div>
+                            <div class="calendar-day-name">Chủ Nhật, 3 tháng 5, 2026</div>
+                            <div class="calendar-lunar">Âm lịch: Mùng 26 tháng 3</div>
+                        </div>
+                        <div class="calendar-today-box">
+                            <span>03</span>
+                            <small>Thứ 7</small>
+                        </div>
+                    </div>
+                    <div class="calendar-grid-real">
+                        <div class="day-name">CN</div>
+                        <div class="day-name">T2</div>
+                        <div class="day-name">T3</div>
+                        <div class="day-name">T4</div>
+                        <div class="day-name">T5</div>
+                        <div class="day-name">T6</div>
+                        <div class="day-name">T7</div>
+
+                        <div class="day inactive">26</div>
+                        <div class="day inactive">27</div>
+                        <div class="day inactive">28</div>
+                        <div class="day inactive">29</div>
+                        <div class="day inactive">30</div>
+                        <div class="day inactive">1</div>
+                        <div class="day inactive">2</div>
+
+                        <div class="day today">3</div>
+                        <div class="day">4</div>
+                        <div class="day">5</div>
+                        <div class="day">6</div>
+                        <div class="day">7</div>
+                        <div class="day">8</div>
+                        <div class="day">9</div>
+
+                        <div class="day">10</div>
+                        <div class="day">11</div>
+                        <div class="day">12</div>
+                        <div class="day">13</div>
+                        <div class="day">14</div>
+                        <div class="day">15</div>
+                        <div class="day">16</div>
+
+                        <div class="day">17</div>
+                        <div class="day">18</div>
+                        <div class="day">19</div>
+                        <div class="day">20</div>
+                        <div class="day">21</div>
+                        <div class="day">22</div>
+                        <div class="day">23</div>
+
+                        <div class="day">24</div>
+                        <div class="day">25</div>
+                        <div class="day">26</div>
+                        <div class="day">27</div>
+                        <div class="day">28</div>
+                        <div class="day">29</div>
+                        <div class="day">30</div>
+                    </div>
+                    <div class="calendar-notes">
+                        <div class="note-title">Sự kiện hôm nay</div>
+                        <div class="note-item"><span class="note-dot note-good"></span> 07:00 - 09:00: Giờ tốt mở cửa công ty</div>
+                        <div class="note-item"><span class="note-dot note-warning"></span> 12:00 - 13:00: Giờ kiêng kỵ, hạn chế sửa chữa</div>
+                        <div class="note-item"><span class="note-dot note-info"></span> 18:00 - 19:00: Lễ cúng tối gia đình</div>
+                    </div>
+                    <div class="calendar-future">
+                        <div class="future-card">
+                            <div class="future-label">Theo dõi năng lượng</div>
+                            <div class="future-text">Sẵn sàng mở rộng với chỉ số điện, nước và khí gas.</div>
+                        </div>
+                        <div class="future-card">
+                            <div class="future-label">Lịch trình tự động</div>
+                            <div class="future-text">Thêm kịch bản bật/tắt thiết bị theo thời gian.</div>
+                        </div>
+                        <div class="future-card">
+                            <div class="future-label">Lịch sử hoạt động</div>
+                            <div class="future-text">Ghi lại mọi lệnh, cảnh báo và trạng thái cảm biến.</div>
+                        </div>
+                        <div class="future-card">
+                            <div class="future-label">Cảnh báo hệ thống</div>
+                            <div class="future-text">Hiển thị trạng thái khẩn cấp và đề xuất xử lý.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card tab-panel" id="device-card">
+                <div class="device-header">
+                    <div>
+                        <h2>Điều Khiển Thiết Bị</h2>
+                        <p class="home-subtitle">Thêm chức năng mở rộng như quản lý thiết bị, kịch bản và phòng.</p>
+                    </div>
+                    <div class="device-actions">
+                        <button class="btn btn-secondary" id="add-device-btn">Thêm thiết bị</button>
+                        <button class="btn btn-secondary" id="create-schedule-btn">Tạo kịch bản</button>
+                        <button class="btn btn-secondary" id="classify-room-btn">Phân loại phòng</button>
+                    </div>
+                </div>
+                <div id="device-setup-panel" class="device-setup-panel">
+                    <p>Chọn một hành động để bắt đầu thiết lập thiết bị hoặc kịch bản.</p>
+                </div>
+                <div id="controls-container"></div>
+            </section>
+
+            <section class="card tab-panel" id="env-card">
+                <h2>Giám Sát Môi Trường</h2>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <!-- Nhiệt độ -->
+                    <div class="sensor-item">
+                        <small>Nhiệt độ</small>
+                        <div id="t-val" class="sensor-value temp">--°C</div>
+                    </div>
+
+                    <!-- Độ ẩm -->
+                    <div class="sensor-item">
+                        <small>Độ ẩm</small>
+                        <div id="h-val" class="sensor-value humi">--%</div>
+                    </div>
+
+                    <!-- Gas -->
+                    <div class="sensor-item">
+                        <small>Khí Gas (PPM)</small>
+                        <div id="gas-val" class="sensor-value gas">--</div>
+                    </div>
+
+                    <!-- Không khí -->
+                    <div class="sensor-item">
+                        <small>Chất lượng không khí</small>
+                        <div id="air-status" class="sensor-value">Đang quét...</div>
+                    </div>
+
+                    <!-- Ánh sáng -->
+                    <div class="sensor-item">
+                        <small>Ánh sáng</small>
+                        <div id="light-val" class="sensor-value">--</div>
+                        <div id="day-night-status" class="status-label" style="font-size: 0.85rem; font-weight: bold; margin-top: 5px;">
+                            Đang xác định...
+                        </div>
+                    </div>
+
+                    <!-- Mưa -->
+                    <div class="sensor-item">
+                        <small>Trạng thái mưa</small>
+                        <div id="rain-status" class="sensor-value">--</div>
+                    </div>
+
+                </div>
+
+
+                <div style="height: 180px;"><canvas id="envChart"></canvas></div>
+            </section>
+
+           <!-- TÌM ĐOẠN NÀY TRONG FILE HTML CỦA BẠN -->
+           <section class="card tab-panel" id="security-card">
+                <h2>An Ninh & Camera</h2>
+                <div class="camera-container">
+                    <iframe
+                        src="https://paste-charge-not-assembly.trycloudflare.com"
+                        frameborder="0"
+                        width="100%"
+                        height="700"
+                        style="border-radius: 12px;"
+                        title="Camera nhận diện khuôn mặt AI"
+                    ></iframe>
+                </div>
+                <div id="alert-box" class="alert-box">
+                    🔄 Hệ thống camera sẵn sàng.
+                </div>
+            </section>
+
+            <section class="card tab-panel" id="energy-card">
+                <h2>Chỉ số Năng Lượng</h2>
+                <p>Giao diện placeholder cho module năng lượng. Sau này có thể hiển thị điện tiêu thụ, nước và năng lượng tái tạo.</p>
+            </section>
+
+            <section class="card tab-panel" id="automation-card">
+                <h2>Tự động hóa</h2>
+                <p>Phần này sẽ dùng để thêm kịch bản bật/tắt tự động, lập lịch và điều kiện thông minh.</p>
+            </section>
+
+            <section class="card tab-panel" id="history-card">
+                <h2>Lịch sử</h2>
+                <p>Bảng tạm thời hiển thị trạng thái lịch sử hoạt động và cảnh báo. Có thể mở rộng thành biểu đồ, log chi tiết.</p>
+            </section>
+
+            <section class="card tab-panel" id="alerts-card">
+                <h2>Cảnh báo</h2>
+                <p>Nơi hiển thị thông báo an ninh, an toàn và sự kiện quan trọng của hệ thống.</p>
+            </section>
+
+            <section class="card tab-panel" id="rooms-card">
+                <h2>Phòng</h2>
+                <p>Quản lý phòng và phân vùng thiết bị. Hiển thị giao diện placeholder cho phòng trong tương lai.</p>
+            </section>
+
+            <section class="card admin-section tab-panel" id="admin-panel">
+                <h2>Quản Trị & Phân Quyền</h2>
+                <div class="admin-flex">
+                    <div class="admin-sub-card">
+                        <h3>Thông tin cá nhân (Admin)</h3>
+                        <input type="text" id="admin-new-u" placeholder="Tên Admin mới">
+                        <input type="password" id="admin-new-p" placeholder="Mật khẩu mới">
+                        <button class="btn btn-primary" onclick="updateAdminProfile()">Cập nhật</button>
+                    </div>
+                    <div class="admin-sub-card">
+                        <h3>Thêm tài khoản người dùng</h3>
+                        <input type="text" id="user-u" placeholder="Tên User">
+                        <input type="password" id="user-p" placeholder="Mật khẩu">
+                        <button class="btn btn-primary" onclick="addNewUser()">Thêm</button>
+                        <table>
+                            <thead><tr><th>Username</th><th>Quyền</th><th>Thao tác</th></tr></thead>
+                            <tbody id="user-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

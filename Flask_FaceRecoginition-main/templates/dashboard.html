@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống giám sát khuôn mặt AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body>
+    <main class="page">
+        <div id="actionToast" class="action-toast" role="status" aria-live="polite"></div>
+
+        <div class="tab-bar panel">
+            <button id="cameraTabBtn" type="button" class="tab-btn is-active" data-tab-target="cameraTab">Hiển thị
+                camera</button>
+            <button id="dataTabBtn" type="button" class="tab-btn" data-tab-target="dataTab">Quản lí dữ liệu</button>
+        </div>
+
+        <section id="cameraTab" class="tab-panel is-active">
+            <section class="dashboard">
+                <section class="panel panel-main">
+                    <div class="section-head">
+                        <div>
+                            <p class="section-tag">Điều khiển camera</p>
+                            <h2>HỆ THỐNG NHẬN DIỆN KHUÔN MẶT</h2>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <label for="cameraIndex">Chỉ số camera</label>
+                        <div class="row">
+                            <input id="cameraIndex" type="number" min="0" step="1" value="0" />
+                            <button id="startBtn" type="button">Mở camera</button>
+                            <button id="stopBtn" type="button" class="secondary">Tắt camera</button>
+                        </div>
+                    </div>
+
+                    <p id="status" class="status">Chưa mở camera.</p>
+
+                    <div class="video-shell">
+                        <div class="video-overlay">
+                            <span class="live-dot"></span>
+                            <span>Luồng camera trực tiếp</span>
+                        </div>
+                        <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Luồng video camera" />
+                    </div>
+                </section>
+
+                <aside class="panel panel-side">
+                    <div id="alertPanel" class="alert-panel alert-idle">
+                        <p class="section-tag">Phân tích an ninh</p>
+                        <h3 id="alertTitle">Đang chờ hệ thống</h3>
+                        <p id="alertMessage">Chưa phát hiện khuôn mặt và chưa khởi động camera.</p>
+                    </div>
+
+                    <div class="info-grid info-grid-single">
+                        <article class="info-card">
+                            <span>Chế độ cảnh báo</span>
+                            <strong id="alertLevelText">Chờ kích hoạt</strong>
+                        </article>
+                    </div>
+
+                    <div class="recognized-panel">
+                        <div class="recognized-head">
+                            <p class="section-tag">Nhận diện khuôn mặt gần nhất</p>
+                            <span id="recognizedBadge" class="badge badge-neutral">Chưa có dữ liệu</span>
+                        </div>
+                        <div id="recognizedContent" class="recognized-content">
+                            Chưa có khuôn mặt nào được nhận diện.
+                        </div>
+                        <div class="recognized-metrics">
+                            <article class="metric-card compact">
+                                <span>FPS</span>
+                                <strong id="fpsValue">0.0</strong>
+                            </article>
+                            <article class="metric-card compact">
+                                <span>Camera</span>
+                                <strong id="cameraIndexValue">-</strong>
+                            </article>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+        </section>
+
+        <section id="dataTab" class="tab-panel">
+            <section class="data-layout">
+                <section class="panel">
+                    <div class="section-head">
+                        <div>
+                            <p class="section-tag">Quản lí dữ liệu</p>
+                            <h2>DỮ LIỆU ĐỐI TƯỢNG ĐÃ ĐĂNG KÝ</h2>
+                        </div>
+                    </div>
+
+                    <div class="data-summary data-summary-actions">
+                        <article class="metric-card">
+                            <span>Số lượng đã đăng ký trong hệ thống</span>
+                            <strong id="knownFacesValue">0</strong>
+                        </article>
+                        <button id="openRegisterBtn" class="add-person-btn" type="button"
+                            aria-label="Thêm người đăng ký">
+                            <span>+</span>
+                            <strong>Thêm dữ liệu</strong>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="section-head data-head">
+                        <div>
+                            <p class="section-tag">Danh sách đối tượng</p>
+                            <h3>Tên các đối tượng đã đăng ký</h3>
+                        </div>
+                    </div>
+                    <div id="registeredNamesList" class="names-list">
+                        <div class="name-item empty-state">Chưa có dữ liệu đăng ký.</div>
+                    </div>
+                </section>
+            </section>
+        </section>
+
+        <div id="registerModal" class="modal-overlay" aria-hidden="true">
+            <section class="register-dialog" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+                <button id="closeRegisterBtn" class="modal-close" type="button" aria-label="Đóng">×</button>
+
+                <div class="register-step is-active" data-step="name">
+                    <p class="section-tag">Thêm người đăng ký</p>
+                    <h3 id="registerTitle">Nhập tên đối tượng</h3>
+                    <label for="personNameInput">Tên đối tượng</label>
+                    <input id="personNameInput" type="text" placeholder="Ví dụ: Nguyen Van A" />
+                    <button id="continueRegisterBtn" type="button">Tiếp tục</button>
+                </div>
+
+                <div class="register-step" data-step="method">
+                    <p class="section-tag">Chọn cách thêm</p>
+                    <h3 id="registerNamePreview">Đối tượng mới</h3>
+                    <div class="method-grid">
+                        <button id="chooseUploadBtn" class="method-card" type="button">
+                            <span>Cách 1</span>
+                            <strong>Upload ảnh tĩnh</strong>
+                        </button>
+                        <button id="chooseScanBtn" class="method-card" type="button">
+                            <span>Cách 2</span>
+                            <strong>Quét khuôn mặt</strong>
+                        </button>
+                    </div>
+                    <button class="secondary back-step-btn" type="button" data-back-to="name">Quay lại</button>
+                </div>
+
+                <div class="register-step" data-step="upload">
+                    <p class="section-tag">Cách 1</p>
+                    <h3>Upload ảnh tĩnh</h3>
+                    <p class="card-description">Chọn 1 ảnh rõ mặt, chỉ có 1 người trong khung hình.</p>
+                    <input id="uploadFaceInput" type="file" accept="image/*" />
+                    <div class="modal-actions">
+                        <button id="uploadFaceBtn" type="button">Upload khuôn mặt</button>
+                        <button class="secondary back-step-btn" type="button" data-back-to="method">Chọn cách
+                            khác</button>
+                    </div>
+                </div>
+
+                <div class="register-step" data-step="scan">
+                    <p class="section-tag">Cách 2</p>
+                    <h3>Quét khuôn mặt</h3>
+                    <p class="card-description">Giữ mặt thẳng trong khung. Camera quét này tách riêng với camera hiển
+                        thị.</p>
+                    <div class="scan-preview-shell">
+                        <video id="scanVideo" autoplay playsinline muted></video>
+                        <div class="scan-guide-frame"></div>
+                        <div id="scannerBeam" class="scanner-beam"></div>
+                    </div>
+                    <canvas id="scanCanvas" class="scan-canvas"></canvas>
+                    <div class="modal-actions">
+                        <button id="startScanCameraBtn" type="button">Bật camera quét</button>
+                        <button id="stopScanCameraBtn" class="secondary" type="button">Tắt camera quét</button>
+                    </div>
+                    <button class="secondary back-step-btn" type="button" data-back-to="method">Chọn cách khác</button>
+                </div>
+
+                <div id="registrationStatus" class="status registration-status">Sẵn sàng thêm dữ liệu mới.</div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const statusEl = document.getElementById("status");
+        const actionToastEl = document.getElementById("actionToast");
+        const cameraIndexEl = document.getElementById("cameraIndex");
+        const videoFeedEl = document.getElementById("videoFeed");
+        const fpsValueEl = document.getElementById("fpsValue");
+        const knownFacesValueEl = document.getElementById("knownFacesValue");
+        const alertPanelEl = document.getElementById("alertPanel");
+        const alertTitleEl = document.getElementById("alertTitle");
+        const alertMessageEl = document.getElementById("alertMessage");
+        const alertLevelTextEl = document.getElementById("alertLevelText");
+        const cameraIndexValueEl = document.getElementById("cameraIndexValue");
+        const recognizedContentEl = document.getElementById("recognizedContent");
+        const recognizedBadgeEl = document.getElementById("recognizedBadge");
+        const registeredNamesListEl = document.getElementById("registeredNamesList");
+        const registrationStatusEl = document.getElementById("registrationStatus");
+        const personNameInputEl = document.getElementById("personNameInput");
+        const uploadFaceInputEl = document.getElementById("uploadFaceInput");
+        const registerModalEl = document.getElementById("registerModal");
+        const registerNamePreviewEl = document.getElementById("registerNamePreview");
+        const scanVideoEl = document.getElementById("scanVideo");
+        const scanCanvasEl = document.getElementById("scanCanvas");
+        const tabButtons = document.querySelectorAll(".tab-btn");
+        const tabPanels = document.querySelectorAll(".tab-panel");
+        const registerSteps = document.querySelectorAll(".register-step");
+        let scanStream = null;
+        let mainStatusHoldUntil = 0;
+        let actionToastTimer = null;
+        let isOpeningDisplayCamera = false;
+        let wasCameraRunningBeforeScan = false;
+        let autoScanTimer = null;
+        let isActivelyScanning = false;
+
+        const alertMap = {
+            idle: {
+                title: "Đang chờ hệ thống",
+                levelText: "Chờ kích hoạt",
+                badge: "Chưa có dữ liệu",
+                panelClass: "alert-idle"
+            },
+            monitoring: {
+                title: "Đang giám sát",
+                levelText: "Theo dõi",
+                badge: "Đang quét",
+                panelClass: "alert-monitoring"
+            },
+            safe: {
+                title: "An toàn",
+                levelText: "Người quen",
+                badge: "An toàn",
+                panelClass: "alert-safe"
+            },
+            danger: {
+                title: "Phát hiện người lạ",
+                levelText: "Cảnh báo cao",
+                badge: "Người lạ",
+                panelClass: "alert-danger"
+            },
+            error: {
+                title: "Lỗi hệ thống",
+                levelText: "Gián đoạn",
+                badge: "Lỗi",
+                panelClass: "alert-error"
+            }
+        };
+
+        async function sendJsonRequest(url, payload = {}) {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!data.ok) {
+                const error = new Error(data.message);
+                error.code = data.code;
+                throw error;
+            }
+
+            return data;
+        }
+
+        function setMainStatus(message, isError = false, holdMs = 0) {
+            statusEl.textContent = message;
+            statusEl.classList.toggle("error", isError);
+            if (holdMs > 0) {
+                mainStatusHoldUntil = Date.now() + holdMs;
+            }
+        }
+
+        function setRegistrationStatus(message, isError = false) {
+            registrationStatusEl.textContent = message;
+            registrationStatusEl.classList.toggle("error", isError);
+        }
+
+        function showActionToast(message, isError = false) {
+            if (actionToastTimer) {
+                clearTimeout(actionToastTimer);
+            }
+
+            actionToastEl.textContent = message;
+            actionToastEl.classList.toggle("error", isError);
+            actionToastEl.classList.add("is-visible");
+
+            actionToastTimer = setTimeout(() => {
+                actionToastEl.classList.remove("is-visible");
+            }, isError ? 8000 : 5000);
+        }
+
+        function hasSecureCameraContext() {
+            return window.isSecureContext || ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+        }
+
+        function getCameraErrorMessage(error) {
+            if (!hasSecureCameraContext()) {
+                return "Trình duyệt chỉ cho mở camera quét trên localhost hoặc HTTPS. Hãy mở bằng http://127.0.0.1:5000 trên máy đang chạy Flask.";
+            }
+
+            if (error && error.name === "NotAllowedError") {
+                return "Trình duyệt đang chặn quyền camera. Hãy cho phép camera trên thanh địa chỉ rồi thử lại.";
+            }
+
+            if (error && (error.name === "NotReadableError" || error.name === "TrackStartError")) {
+                return "Camera đang bận hoặc bị ứng dụng khác giữ. Hãy tắt camera hiển thị gốc, Zoom/Teams/Camera app rồi thử lại.";
+            }
+
+            if (error && error.name === "NotFoundError") {
+                return "Không tìm thấy thiết bị camera để quét.";
+            }
+
+            return (error && error.message) || "Không mở được camera quét.";
+        }
+
+        function renderStatus(data) {
+            const level = data.alert_level || "idle";
+            const config = alertMap[level] || alertMap.idle;
+
+            fpsValueEl.textContent = (data.fps ?? 0).toFixed(1);
+            knownFacesValueEl.textContent = data.known_faces ?? 0;
+            cameraIndexValueEl.textContent = data.camera_running ? (data.camera_index ?? 0) : "-";
+            if (Date.now() >= mainStatusHoldUntil) {
+                setMainStatus(data.status_text || "Hệ thống đang chờ.", level === "danger" || level === "error");
+            }
+
+            alertPanelEl.className = "alert-panel " + config.panelClass;
+            alertTitleEl.textContent = config.title;
+            alertMessageEl.textContent = data.alert_text || "Đang chờ dữ liệu từ hệ thống.";
+            alertLevelTextEl.textContent = config.levelText;
+            recognizedBadgeEl.textContent = config.badge;
+            recognizedBadgeEl.className = "badge " + (
+                level === "safe" ? "badge-safe" :
+                    level === "danger" ? "badge-danger" :
+                        level === "error" ? "badge-error" :
+                            "badge-neutral"
+            );
+            renderRegisteredNames(data.known_names || []);
+
+            if (level === "safe" && Array.isArray(data.recognized_names) && data.recognized_names.length) {
+                const uniqueNames = [...new Set(data.recognized_names)];
+                recognizedContentEl.textContent = "Đã xác thực: " + uniqueNames.join(", ");
+            } else if (level === "danger") {
+                recognizedContentEl.textContent = `Có ${data.unknown_count || 0} người lạ xuất hiện trong vùng theo dõi.`;
+            } else if (level === "monitoring") {
+                recognizedContentEl.textContent = "Hệ thống đang quét khuôn mặt trong khung hình.";
+            } else if (level === "error") {
+                recognizedContentEl.textContent = "Luồng giám sát đang gặp lỗi, vui lòng kiểm tra camera.";
+            } else {
+                recognizedContentEl.textContent = "Chưa có khuôn mặt nào được nhận diện.";
+            }
+        }
+
+        function renderRegisteredNames(names) {
+            if (!Array.isArray(names) || names.length === 0) {
+                registeredNamesListEl.innerHTML = '<div class="name-item empty-state">Chưa có dữ liệu đăng ký.</div>';
+                return;
+            }
+
+            registeredNamesListEl.innerHTML = names
+                .map((name) => {
+                    const safeName = name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    return `
+                    <div class="name-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-color);">
+                        <span class="name-text" style="font-weight: 500;">${name}</span>
+                        <div class="name-actions" style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="action-btn edit-btn" style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border: 1px solid var(--border-color); background: var(--bg-color); border-radius: 4px; cursor: pointer;" onclick="window.editFace('${safeName}')">Sửa</button>
+                            <button type="button" class="action-btn delete-btn" style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border: 1px solid #ff4d4f; color: #ff4d4f; background: transparent; border-radius: 4px; cursor: pointer;" onclick="window.deleteFace('${safeName}')">Xóa</button>
+                        </div>
+                    </div>`;
+                })
+                .join("");
+        }
+
+        window.editFace = async function (oldName) {
+            const newName = prompt(`Nhập tên mới cho '${oldName}':`, oldName);
+            if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
+
+            try {
+                const data = await sendJsonRequest("/data/rename", { old_name: oldName.trim(), new_name: newName.trim() });
+                showActionToast(data.message, false);
+                await refreshDashboard();
+            } catch (error) {
+                console.error(error);
+                showActionToast(error.message, true);
+            }
+        };
+
+        window.deleteFace = async function (name) {
+            if (!confirm(`Bạn có chắc chắn muốn xóa toàn bộ dữ liệu khuôn mặt của '${name}' không? Hành động này không thể hoàn tác.`)) return;
+
+            try {
+                const data = await sendJsonRequest("/data/delete", { person_name: name });
+                showActionToast(data.message, false);
+                await refreshDashboard();
+            } catch (error) {
+                console.error(error);
+                showActionToast(error.message, true);
+            }
+        };
+
+        function setActiveTab(targetId) {
+            tabButtons.forEach((button) => {
+                button.classList.toggle("is-active", button.dataset.tabTarget === targetId);
+            });
+
+            tabPanels.forEach((panel) => {
+                panel.classList.toggle("is-active", panel.id === targetId);
+            });
+        }
+
+        function forceCameraView() {
+            const cameraTabBtn = document.getElementById("cameraTabBtn");
+            const dataTabBtn = document.getElementById("dataTabBtn");
+            const cameraTab = document.getElementById("cameraTab");
+            const dataTab = document.getElementById("dataTab");
+
+            cameraTabBtn.classList.add("is-active");
+            dataTabBtn.classList.remove("is-active");
+            cameraTab.classList.add("is-active");
+            dataTab.classList.remove("is-active");
+        }
+
+        function getPersonName() {
+            return personNameInputEl.value.trim();
+        }
+
+        function setRegisterStep(stepName) {
+            registerSteps.forEach((step) => {
+                step.classList.toggle("is-active", step.dataset.step === stepName);
+            });
+        }
+
+        function openRegisterModal() {
+            registerModalEl.classList.add("is-open");
+            registerModalEl.setAttribute("aria-hidden", "false");
+            setRegisterStep("name");
+            setRegistrationStatus("Sẵn sàng thêm dữ liệu mới.", false);
+            setTimeout(() => personNameInputEl.focus(), 50);
+        }
+
+        function closeRegisterModal() {
+            registerModalEl.classList.remove("is-open");
+            // Xóa focus trên các nút bên trong modal để tránh lỗi "Blocked aria-hidden" của trình duyệt
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+            registerModalEl.setAttribute("aria-hidden", "true");
+            stopScanCamera();
+        }
+
+        function resetRegistrationFlow(message = "Sẵn sàng thêm dữ liệu mới.", isError = false) {
+            stopScanCamera();
+            personNameInputEl.value = "";
+            uploadFaceInputEl.value = "";
+            registerNamePreviewEl.textContent = "Đối tượng mới";
+            setRegisterStep("name");
+            setRegistrationStatus(message, isError);
+            closeRegisterModal();
+        }
+
+        function finishRegistrationFlow(message, isError = false) {
+            resetRegistrationFlow(message, isError);
+            forceCameraView();
+            setMainStatus(message, isError, isError ? 8000 : 5000);
+            showActionToast(message, isError);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+
+            // Tự động làm mới lại khung hình camera hiển thị (để lấy chữ placeholder từ backend) thay vì bật thật
+            if (!isError) {
+                setTimeout(() => {
+                    videoFeedEl.src = "{{ url_for('video_feed') }}?t=" + Date.now();
+                }, 800);
+            }
+
+            refreshDashboard().finally(() => {
+                forceCameraView();
+                setMainStatus(message, isError, isError ? 8000 : 5000);
+                showActionToast(message, isError);
+            });
+
+            setTimeout(() => {
+                forceCameraView();
+                setMainStatus(message, isError, isError ? 8000 : 5000);
+                showActionToast(message, isError);
+            }, 120);
+
+            setTimeout(() => {
+                forceCameraView();
+                setMainStatus(message, isError, isError ? 8000 : 5000);
+            }, 600);
+        }
+
+        async function startScanCamera() {
+            stopScanCamera();
+
+            if (!hasSecureCameraContext()) {
+                throw new Error("Trình duyệt chỉ cho mở camera quét trên localhost hoặc HTTPS. Hãy mở bằng http://127.0.0.1:5000 trên máy đang chạy Flask.");
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error("Trình duyệt không hỗ trợ getUserMedia để mở camera quét.");
+            }
+
+            try {
+                scanStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 960 },
+                        height: { ideal: 720 },
+                        facingMode: "user"
+                    },
+                    audio: false
+                });
+                scanVideoEl.srcObject = scanStream;
+                await scanVideoEl.play();
+            } catch (error) {
+                stopScanCamera();
+                throw new Error(getCameraErrorMessage(error));
+            }
+        }
+
+        function stopScanCamera() {
+            if (autoScanTimer) {
+                clearTimeout(autoScanTimer);
+                autoScanTimer = null;
+            }
+            isActivelyScanning = false;
+
+            if (scanStream) {
+                scanStream.getTracks().forEach((track) => track.stop());
+                scanStream = null;
+            }
+            scanVideoEl.srcObject = null;
+        }
+
+        function waitForCameraRelease(delayMs = 800) {
+            return new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+
+        async function stopScanCameraAndWait() {
+            const hadScanStream = Boolean(scanStream);
+            stopScanCamera();
+            if (hadScanStream) {
+                await waitForCameraRelease();
+            }
+        }
+
+        function captureScanFrame() {
+            if (!scanStream || scanVideoEl.readyState < 2) {
+                throw new Error("Vui lòng bật camera quét trước.");
+            }
+
+            const width = scanVideoEl.videoWidth;
+            const height = scanVideoEl.videoHeight;
+            scanCanvasEl.width = width;
+            scanCanvasEl.height = height;
+            const context = scanCanvasEl.getContext("2d");
+            context.drawImage(scanVideoEl, 0, 0, width, height);
+            return scanCanvasEl.toDataURL("image/jpeg", 0.92);
+        }
+
+        async function stopDisplayCameraForScan() {
+            try {
+                const healthResponse = await fetch("/health");
+                if (!healthResponse.ok) {
+                    throw new Error("Không lấy được trạng thái camera hiển thị.");
+                }
+
+                const healthData = await healthResponse.json();
+                if (healthData.camera_running) {
+                    await sendJsonRequest("/stop_camera");
+                    videoFeedEl.src = "{{ url_for('video_feed') }}?t=" + Date.now();
+                    setMainStatus("Đã tạm tắt camera hiển thị để mở camera quét.", false);
+                }
+            } catch (error) {
+                throw new Error("Không kết nối được Flask ở cổng 5000 để nhả camera hiển thị. Hãy khởi động lại server rồi thử lại.");
+            }
+        }
+
+        async function refreshDashboard() {
+            try {
+                const response = await fetch("/health");
+                if (!response.ok) {
+                    throw new Error("Không lấy được trạng thái hệ thống.");
+                }
+                const data = await response.json();
+                renderStatus(data);
+            } catch (error) {
+                setMainStatus("Mất kết nối server. Hãy kiểm tra Flask còn đang chạy ở cổng 5000.", true);
+            }
+        }
+
+        document.getElementById("startBtn").addEventListener("click", async () => {
+            if (isOpeningDisplayCamera) {
+                return;
+            }
+
+            const cameraIndex = cameraIndexEl.value || 0;
+            try {
+                isOpeningDisplayCamera = true;
+                document.getElementById("startBtn").disabled = true;
+                setMainStatus("Đang tắt camera quét và mở camera hiển thị...", false, 4000);
+                await stopScanCameraAndWait();
+                const data = await sendJsonRequest("/start_camera", { camera_index: cameraIndex });
+                videoFeedEl.src = "{{ url_for('video_feed') }}?t=" + Date.now();
+                setMainStatus(data.message, false, 5000);
+                refreshDashboard();
+            } catch (error) {
+                console.error(error);
+                setMainStatus(error.message, true, 8000);
+            } finally {
+                isOpeningDisplayCamera = false;
+                document.getElementById("startBtn").disabled = false;
+            }
+        });
+
+        document.getElementById("stopBtn").addEventListener("click", async () => {
+            try {
+                const data = await sendJsonRequest("/stop_camera");
+                stopScanCamera();
+                await waitForCameraRelease();
+                videoFeedEl.src = "{{ url_for('video_feed') }}?t=" + Date.now();
+                setMainStatus(data.message, false, 5000);
+                refreshDashboard();
+            } catch (error) {
+                console.error(error);
+                setMainStatus(error.message, true);
+            }
+        });
+
+        document.getElementById("uploadFaceBtn").addEventListener("click", async () => {
+            const personName = getPersonName();
+            const faceFile = uploadFaceInputEl.files[0];
+
+            if (!personName) {
+                setRegistrationStatus("Vui lòng nhập tên trước khi upload.", true);
+                return;
+            }
+
+            if (!faceFile) {
+                setRegistrationStatus("Vui lòng chọn ảnh khuôn mặt để upload.", true);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("person_name", personName);
+            formData.append("face_image", faceFile);
+
+            setRegistrationStatus("Đang upload và kiểm tra ảnh khuôn mặt...");
+
+            try {
+                const response = await fetch("/register/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (!data.ok) {
+                    const error = new Error(data.message);
+                    error.code = data.code;
+                    throw error;
+                }
+
+                finishRegistrationFlow(data.message, false);
+            } catch (error) {
+                console.error(error);
+                setRegistrationStatus(error.message, true);
+                if (error.code === "duplicate") {
+                    finishRegistrationFlow(error.message, true);
+                }
+            }
+        });
+
+        async function runAutoScanLoop() {
+            if (!scanStream || isActivelyScanning) return;
+
+            const personName = getPersonName();
+            if (!personName) {
+                setRegistrationStatus("Vui lòng nhập tên trước khi quét.", true);
+                stopScanCamera();
+                return;
+            }
+
+            isActivelyScanning = true;
+            try {
+                const imageData = captureScanFrame();
+                const data = await sendJsonRequest("/register/frame", {
+                    person_name: personName,
+                    image_data: imageData
+                });
+
+                finishRegistrationFlow(data.message, false);
+            } catch (error) {
+                if (error.code === "duplicate") {
+                    finishRegistrationFlow(error.message, true);
+                } else {
+                    setRegistrationStatus(error.message || "Đang tự động quét...", true);
+                    if (scanStream) {
+                        autoScanTimer = setTimeout(runAutoScanLoop, 1000);
+                    }
+                }
+            } finally {
+                isActivelyScanning = false;
+            }
+        }
+
+        document.getElementById("openRegisterBtn").addEventListener("click", openRegisterModal);
+        document.getElementById("closeRegisterBtn").addEventListener("click", closeRegisterModal);
+
+        document.getElementById("continueRegisterBtn").addEventListener("click", () => {
+            const personName = getPersonName();
+            if (!personName) {
+                setRegistrationStatus("Vui lòng nhập tên đối tượng trước.", true);
+                return;
+            }
+
+            registerNamePreviewEl.textContent = personName;
+            setRegistrationStatus("Chọn cách thêm dữ liệu cho đối tượng này.", false);
+            setRegisterStep("method");
+        });
+
+        document.getElementById("chooseUploadBtn").addEventListener("click", () => {
+            stopScanCamera();
+            setRegistrationStatus("Chọn ảnh tĩnh rõ mặt để upload.", false);
+            setRegisterStep("upload");
+        });
+
+        document.getElementById("chooseScanBtn").addEventListener("click", () => {
+            setRegistrationStatus("Bật camera quét, căn mặt vào khung rồi bấm quét.", false);
+            setRegisterStep("scan");
+        });
+
+        document.getElementById("startScanCameraBtn").addEventListener("click", async () => {
+            try {
+                setRegistrationStatus("Đang nhả camera hiển thị và bật camera quét...");
+                await stopDisplayCameraForScan();
+                await startScanCamera();
+                setRegistrationStatus("Đang tự động định vị khuôn mặt. Vui lòng nhìn thẳng vào camera...", false);
+
+                if (autoScanTimer) clearTimeout(autoScanTimer);
+                autoScanTimer = setTimeout(runAutoScanLoop, 1500);
+            } catch (error) {
+                console.error(error);
+                setRegistrationStatus(getCameraErrorMessage(error), true);
+            }
+        });
+
+        document.getElementById("stopScanCameraBtn").addEventListener("click", () => {
+            stopScanCamera();
+            setRegistrationStatus("Đã tắt camera quét.", false);
+        });
+
+        document.querySelectorAll(".back-step-btn").forEach((button) => {
+            button.addEventListener("click", () => {
+                if (button.dataset.backTo !== "scan") {
+                    stopScanCamera();
+                }
+                setRegisterStep(button.dataset.backTo);
+                setRegistrationStatus("Tiếp tục thêm dữ liệu mới.", false);
+            });
+        });
+
+        registerModalEl.addEventListener("click", (event) => {
+            if (event.target === registerModalEl) {
+                closeRegisterModal();
+            }
+        });
+
+        tabButtons.forEach((button) => {
+            button.addEventListener("click", async () => {
+                if (button.dataset.tabTarget === "cameraTab") {
+                    await stopScanCameraAndWait();
+                }
+                setActiveTab(button.dataset.tabTarget);
+            });
+        });
+        refreshDashboard();
+        setInterval(refreshDashboard, 1000);
+    </script>
+</body>
+
+</html>

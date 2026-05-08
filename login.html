@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập SmartHome</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-container">
+    <div class="login-card">
+        <img src="ute_logo_color.png" alt="Logo">
+        <h2>Hệ Thống Nhà Thông Minh</h2>
+        <input type="text" id="user" placeholder="Tên đăng nhập">
+        <input type="password" id="pass" placeholder="Mật khẩu">
+        <button class="btn btn-primary" style="width: 100%;" onclick="login()">ĐĂNG NHẬP</button>
+    </div>
+    <script>
+        // Khởi tạo tài khoản admin mặc định nếu lần đầu sử dụng
+        if (!localStorage.getItem('accounts')) {
+            localStorage.setItem('accounts', JSON.stringify([{username: 'admin', password: '123', role: 'admin'}]));
+        }
+
+        function login() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const accounts = JSON.parse(localStorage.getItem('accounts'));
+            const found = accounts.find(acc => acc.username === u && acc.password === p);
+
+            if (found) {
+                localStorage.setItem('currentUser', JSON.stringify(found));
+                window.location.href = 'dashboard.html';
+            } else {
+                alert("Tài khoản hoặc mật khẩu không chính xác!");
+            }
+        }
+    </script>
+</body>
+</html>
