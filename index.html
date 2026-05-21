@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard SmartHome</title>
+    <title>wed SmartHome</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -28,11 +28,8 @@
             <button class="tab-btn" data-target="device-card" data-label="Điều Khiển Thiết Bị">Thiết Bị</button>
             <button class="tab-btn" data-target="env-card" data-label="Giám Sát Cảm Biến">Giám Sát Cảm Biến</button>
             <button class="tab-btn" data-target="security-card" data-label="An Ninh">An Ninh</button>
-            <button class="tab-btn" data-target="energy-card" data-label="Năng Lượng">Năng lượng</button>
-            <button class="tab-btn" data-target="automation-card" data-label="Tự động hóa">Tự động hóa</button>
             <button class="tab-btn" data-target="history-card" data-label="Lịch sử">Lịch sử</button>
             <button class="tab-btn" data-target="alerts-card" data-label="Cảnh báo">Cảnh báo</button>
-            <button class="tab-btn" data-target="rooms-card" data-label="Phòng">Phòng</button>
             <button class="tab-btn" data-target="admin-panel" data-label="Quản Trị">Quản Trị</button>
         </div>
 
@@ -43,15 +40,16 @@
                         <h2>Trang chủ</h2>
                         <p class="home-subtitle">Tổng quan, trạng thái hệ thống và sự kiện gần đây.</p>
                     </div>
-                    <div class="alert-pill">🛈 Hệ thống ổn định. Không có cảnh báo khẩn cấp.</div>
+                    <div id="home-status-pill" class="alert-pill">🛈 Hệ thống ổn định. Không có cảnh báo khẩn cấp.</div>
                 </div>
 
                 <div class="home-summary-grid">
-                    <div class="home-pill"><span>Nhiệt độ</span><strong>--°C</strong></div>
-                    <div class="home-pill"><span>Độ ẩm</span><strong>--%</strong></div>
-                    <div class="home-pill"><span>Khí gas</span><strong>-- ppm</strong></div>
-                    <div class="home-pill"><span>Camera</span><strong>Online</strong></div>
-                    <div class="home-pill"><span>Thiết bị</span><strong>6/8</strong></div>
+                    <div class="home-pill"><span>Nhiệt độ</span><strong id="home-temp">--°C</strong></div>
+                    <div class="home-pill"><span>Độ ẩm</span><strong id="home-humi">--%</strong></div>
+                    <div class="home-pill"><span>Khí gas</span><strong id="home-gas">-- ppm</strong></div>
+                    <div class="home-pill"><span>Camera</span><strong id="home-camera-status">Offline</strong></div>
+                    <div class="home-pill"><span>MQTT Topic</span><strong id="mqtt-last-topic-summary">Không có</strong></div>
+                    <div class="home-pill"><span>Thiết bị</span><strong id="device-count">0/8</strong></div>
                 </div>
 
                 <div class="home-main-grid">
@@ -138,12 +136,8 @@
                     </div>
                     <div class="calendar-future">
                         <div class="future-card">
-                            <div class="future-label">Theo dõi năng lượng</div>
-                            <div class="future-text">Sẵn sàng mở rộng với chỉ số điện, nước và khí gas.</div>
-                        </div>
-                        <div class="future-card">
-                            <div class="future-label">Lịch trình tự động</div>
-                            <div class="future-text">Thêm kịch bản bật/tắt thiết bị theo thời gian.</div>
+                            <div class="future-label">Theo dõi trạng thái</div>
+                            <div class="future-text">Hệ thống liên tục cập nhật dữ liệu thời gian thực từ phần cứng.</div>
                         </div>
                         <div class="future-card">
                             <div class="future-label">Lịch sử hoạt động</div>
@@ -161,12 +155,11 @@
                 <div class="device-header">
                     <div>
                         <h2>Điều Khiển Thiết Bị</h2>
-                        <p class="home-subtitle">Thêm chức năng mở rộng như quản lý thiết bị, kịch bản và phòng.</p>
+                        <p class="home-subtitle">Thêm chức năng mở rộng như quản lý thiết bị và kịch bản.</p>
                     </div>
                     <div class="device-actions">
                         <button class="btn btn-secondary" id="add-device-btn">Thêm thiết bị</button>
                         <button class="btn btn-secondary" id="create-schedule-btn">Tạo kịch bản</button>
-                        <button class="btn btn-secondary" id="classify-room-btn">Phân loại phòng</button>
                     </div>
                 </div>
                 <div id="device-setup-panel" class="device-setup-panel">
@@ -179,31 +172,26 @@
                 <h2>Giám Sát Môi Trường</h2>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                    <!-- Nhiệt độ -->
                     <div class="sensor-item">
                         <small>Nhiệt độ</small>
                         <div id="t-val" class="sensor-value temp">--°C</div>
                     </div>
 
-                    <!-- Độ ẩm -->
                     <div class="sensor-item">
                         <small>Độ ẩm</small>
                         <div id="h-val" class="sensor-value humi">--%</div>
                     </div>
 
-                    <!-- Gas -->
                     <div class="sensor-item">
                         <small>Khí Gas (PPM)</small>
                         <div id="gas-val" class="sensor-value gas">--</div>
                     </div>
 
-                    <!-- Không khí -->
                     <div class="sensor-item">
                         <small>Chất lượng không khí</small>
                         <div id="air-status" class="sensor-value">Đang quét...</div>
                     </div>
 
-                    <!-- Ánh sáng -->
                     <div class="sensor-item">
                         <small>Ánh sáng</small>
                         <div id="light-val" class="sensor-value">--</div>
@@ -212,24 +200,20 @@
                         </div>
                     </div>
 
-                    <!-- Mưa -->
                     <div class="sensor-item">
                         <small>Trạng thái mưa</small>
                         <div id="rain-status" class="sensor-value">--</div>
                     </div>
-
                 </div>
-
 
                 <div style="height: 180px;"><canvas id="envChart"></canvas></div>
             </section>
 
-           <!-- TÌM ĐOẠN NÀY TRONG FILE HTML CỦA BẠN -->
-           <section class="card tab-panel" id="security-card">
+            <section class="card tab-panel" id="security-card">
                 <h2>An Ninh & Camera</h2>
                 <div class="camera-container">
                     <iframe
-                        src="  https://raising-operate-fitting-troy.trycloudflare.com"
+                        src="https://stops-flows-asking-addresses.trycloudflare.com"
                         frameborder="0"
                         width="100%"
                         height="700"
@@ -242,29 +226,25 @@
                 </div>
             </section>
 
-            <section class="card tab-panel" id="energy-card">
-                <h2>Chỉ số Năng Lượng</h2>
-                <p>Giao diện placeholder cho module năng lượng. Sau này có thể hiển thị điện tiêu thụ, nước và năng lượng tái tạo.</p>
-            </section>
-
-            <section class="card tab-panel" id="automation-card">
-                <h2>Tự động hóa</h2>
-                <p>Phần này sẽ dùng để thêm kịch bản bật/tắt tự động, lập lịch và điều kiện thông minh.</p>
-            </section>
-
             <section class="card tab-panel" id="history-card">
                 <h2>Lịch sử</h2>
-                <p>Bảng tạm thời hiển thị trạng thái lịch sử hoạt động và cảnh báo. Có thể mở rộng thành biểu đồ, log chi tiết.</p>
+                <p>Bảng tạm thời hiển thị trạng thái lịch sử hoạt động và cảnh báo.</p>
+                <div id="history-log" class="history-log">
+                    <div class="history-empty">Chưa có ghi nhận lịch sử.</div>
+                </div>
+                <div class="mqtt-debug-card">
+                    <div class="mqtt-debug-title">MQTT Debug</div>
+                    <div class="mqtt-debug-row"><strong>Topic đang nhận:</strong> <span id="mqtt-last-topic-debug">Không có</span></div>
+                    <div class="mqtt-debug-row"><strong>Payload mới nhất:</strong> <span id="mqtt-last-payload">Không có</span></div>
+                </div>
             </section>
 
             <section class="card tab-panel" id="alerts-card">
                 <h2>Cảnh báo</h2>
                 <p>Nơi hiển thị thông báo an ninh, an toàn và sự kiện quan trọng của hệ thống.</p>
-            </section>
-
-            <section class="card tab-panel" id="rooms-card">
-                <h2>Phòng</h2>
-                <p>Quản lý phòng và phân vùng thiết bị. Hiển thị giao diện placeholder cho phòng trong tương lai.</p>
+                <div id="alerts-list" class="alerts-list">
+                    <div class="alerts-empty">Hiện chưa có cảnh báo cấp bách.</div>
+                </div>
             </section>
 
             <section class="card admin-section tab-panel" id="admin-panel">
