@@ -21,13 +21,27 @@ const MQTT_TOPICS = ['esp32/data', 'smartdoor/recognition/#', 'smartdoor/system/
 const HISTORY_MAX_LOGS = 40;
 
 let dataTimeout; 
-const TIMEOUT_MS = 10000; // Thay đổi theo yêu cầu mới: Sau 10s không có dữ liệu -> Reset trang chính
+const TIMEOUT_MS = 10000; // Sau 10s không có dữ liệu -> Reset trang chính
 let isSyncing = false;
 let envChart = null;
 
-// Định nghĩa mảng 8 ID thiết bị khớp giao diện
-const devices = ["dev1", "dev2", "dev3", "dev4", "dev5", "dev6", "dev7", "dev8"];
-const deviceLabels = ["Đèn Phòng Khách", "Đèn Phòng Ngủ", "Đèn Phòng Bếp", "Đèn Nhà Vệ Sinh", "Đèn Ngoài Trời", "Rèm Cửa", "Cổng Chính", "Quạt"];
+// Khai báo mảng trạng thái toàn cục của 10 thiết bị để đồng bộ giao diện linh hoạt
+let currentDeviceStates = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+// Định nghĩa mảng 10 ID thiết bị khớp giao diện
+const devices = ["dev1", "dev2", "dev3", "dev4", "dev5", "dev6", "dev7", "dev8", "dev9", "dev10"];
+const deviceLabels = [
+    "Đèn Phòng Khách", // Index 0
+    "Đèn Phòng Ngủ",   // Index 1
+    "Đèn Phòng Bếp",   // Index 2
+    "Đèn Nhà Vệ Sinh", // Index 3
+    "Đèn Ngoài Trời",  // Index 4
+    "Quạt phòng khách",// Index 5
+    "Quạt phòng bếp",  // Index 6
+    "Quạt phòng ngủ",  // Index 7
+    "Mái Che Tự Động", // Index 8 (Dùng Switch)
+    "Cổng Chính Servo" // Index 9 (Dùng Button + Đèn màu Xanh/Đỏ)
+];
 
 // ================================================================
 // 2. KHỞI TẠO HỆ THỐNG KHI TẢI TRANG
@@ -35,19 +49,8 @@ const deviceLabels = ["Đèn Phòng Khách", "Đèn Phòng Ngủ", "Đèn Phòng
 function init() {
     updateUI('display-name', `Chào, ${currentUser.username} (${currentUser.role})`);
 
-    // Tự động kết xuất danh sách switch thiết bị
-    const container = document.getElementById('controls-container');
-    if (container) {
-        container.innerHTML = devices.map((id, i) => `
-            <div class="control-item">
-                <span>${deviceLabels[i]}</span>
-                <label class="switch">
-                    <input type="checkbox" id="${id}" onchange="onControlChange('${id}', this.checked)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        `).join('');
-    }
+    // Vẽ giao diện ban đầu (Sử dụng hàm render thông minh để tách biệt Switch và Button)
+    renderDeviceUI(currentDeviceStates);
 
     // Khởi chạy đồng hồ và lịch thực tế
     updateRealTimeCalendar();
@@ -124,6 +127,44 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 
+// HÀM TẠO HTML ĐỘNG CHO DANH SÁCH THIẾT BỊ (Tách biệt Mái Che và Cổng Chính)
+function renderDeviceUI(states) {
+    const container = document.getElementById('controls-container');
+    if (!container) return;
+
+    container.innerHTML = states.map((state, i) => {
+        const id = devices[i];
+        const isOn = (state === 1);
+
+        // NẾU LÀ CỔNG CHÍNH (INDEX 9 - DÙNG BUTTON + ĐÈN TÍN HIỆU)
+        if (i === 9) {
+            return `
+                <div class="control-item gate-item ${isOn ? 'gate-open' : 'gate-close'}" id="item-${id}" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span>${deviceLabels[i]}</span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="gate-led" id="led-${id}" style="width: 14px; height: 14px; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px rgba(0,0,0,0.3); background-color: ${isOn ? '#ff4d4d' : '#2ecc71'};"></span>
+                        <button class="btn-gate" onclick="onGateButtonClick('${id}', ${i})" style="background-color: #34495e; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">
+                            ${isOn ? 'ĐÓNG CỔNG' : 'MỞ CỔNG'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        } 
+        // TẤT CẢ CÁC THIẾT BỊ CÒN LẠI (BAO GỒM MÁI CHE INDEX 8 - DÙNG SWITCH GẠT)
+        else {
+            return `
+                <div class="control-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span>${deviceLabels[i]}</span>
+                    <label class="switch">
+                        <input type="checkbox" id="${id}" ${isOn ? 'checked' : ''} onchange="onControlChange('${id}', this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `;
+        }
+    }).join('');
+}
+
 // ================================================================
 // 3. XỬ LÝ NHẬN VÀ HIỂN THỊ DỮ LIỆU CẢM BIẾN TOÀN DIỆN
 // ================================================================
@@ -163,7 +204,7 @@ function connectMQTT() {
             const data = JSON.parse(messageStr);
 
             if (topic === 'esp32/data') {
-                // Xóa và thiết lập lại bộ đếm thời gian chờ 5 giây (Timeout)
+                // Xóa và thiết lập lại bộ đếm thời gian chờ
                 clearTimeout(dataTimeout);
                 dataTimeout = setTimeout(resetDashboardData, TIMEOUT_MS);
 
@@ -172,7 +213,7 @@ function connectMQTT() {
                     updateSensorData(data.temp, data.humi);
                 }
 
-                // [2] Khớp dữ liệu cảm biến khí độc GAS mới nhất (gas_adc & gas_status)
+                // [2] Khớp dữ liệu cảm biến khí độc GAS mới nhất
                 if (data.gas_adc !== undefined) {
                     updateUI('gas-val', data.gas_adc + " ADC");
                     updateUI('home-gas', data.gas_adc + " ADC");
@@ -181,7 +222,7 @@ function connectMQTT() {
                     updateAirStatus(data.gas_status);
                 }
 
-                // [3] Khớp cảm biến Ánh sáng mới nhất (light_adc & light_status)
+                // [3] Khớp cảm biến Ánh sáng mới nhất
                 if (data.light_adc !== undefined) {
                     updateUI('light-val', data.light_adc + " ADC");
                 }
@@ -194,7 +235,7 @@ function connectMQTT() {
                     }
                 }
 
-                // [4] Khớp cảm biến Mưa mới nhất (rain_adc & rain_status)
+                // [4] Khớp cảm biến Mưa mới nhất
                 if (data.rain_status !== undefined) {
                     let rainStr = "Không mưa ☀️";
                     let isRaining = false;
@@ -213,13 +254,72 @@ function connectMQTT() {
                     }
                 }
 
-                // [5] Đồng bộ hóa trạng thái nút bấm vật lý phản hồi lên Web
+                // =========================================================================
+                // ĐOẠN ĐỒNG BỘ: BÓC TÁCH "gate_log" CHUYỂN TIẾP LÊN TAB "AN NINH CỔNG"
+                // =========================================================================
+                if (data.gate_log !== undefined && data.gate_log !== "") {
+                    // 1. Đồng bộ văn bản lên Tab "An Ninh Cổng" vừa tạo
+                    const tabLogBox = document.getElementById('slave-gate-log-box');
+                    if (tabLogBox) {
+                        tabLogBox.innerText = data.gate_log;
+                        
+                        // Đổi màu thông báo trực quan theo kết quả xử lý của Slave
+                        if (data.gate_log.includes("SAI") || data.gate_log.includes("THẤT BẠI") || data.gate_log.includes("KHONG_HOP_LE")) {
+                            tabLogBox.style.color = '#ff4d4d'; // Đỏ nếu lỗi
+                        } else if (data.gate_log.includes("THÀNH CÔNG") || data.gate_log.includes("HỢP LỆ")) {
+                            tabLogBox.style.color = '#2ecc71'; // Xanh nếu OK
+                        } else {
+                            tabLogBox.style.color = '#ecf0f1'; // Trắng mặc định
+                        }
+                    }
+
+                    // 2. Tự động ghi nhận lịch sử tương tác này vào hệ thống của Web để lưu vết
+                    if (data.gate_log.includes("KHONG_HOP_LE") || data.gate_log.includes("sai") || data.gate_log.includes("THẤT BẠI")) {
+                        pushEventLog('An ninh Cổng chính', `Cảnh báo từ Slave: ${data.gate_log}`, 'danger');
+                    } else {
+                        pushEventLog('Nhật ký Cổng chính', `Báo cáo từ Slave: ${data.gate_log}`, 'safe');
+                    }
+                }
+
+                // [5] ĐỒNG BỘ HÓA TRẠNG THÁI NÚT BẤM VẬT LÝ VÀ PHẢN HỒI LÊN WEB
                 if (data.devices && Array.isArray(data.devices)) {
                     isSyncing = true;
-                    data.devices.forEach((state, i) => {
-                        const checkbox = document.getElementById(devices[i]);
-                        if (checkbox) checkbox.checked = (state === 1);
+                    
+                    currentDeviceStates = [...data.devices];
+
+                    currentDeviceStates.forEach((state, i) => {
+                        const id = devices[i];
+                        const isOn = (state === 1);
+
+                        if (i === 9) {
+                            // A. Cập nhật giao diện cũ (nếu còn)
+                            const led = document.getElementById(`led-${id}`);
+                            const btn = document.querySelector(`#item-${id} .btn-gate`);
+                            if (led) led.style.backgroundColor = isOn ? '#ff4d4d' : '#2ecc71';
+                            if (btn) btn.innerText = isOn ? 'ĐÓNG CỔNG' : 'MỞ CỔNG';
+
+                            // B. ĐỒNG BỘ SANG CÁC THÀNH PHẦN MỚI TRÊN TAB "AN NINH CỔNG"
+                            const cardLed = document.getElementById('card-gate-led');
+                            const cardStatusText = document.getElementById('card-gate-status-text');
+                            const cardBtn = document.getElementById('card-btn-gate-control');
+
+                            if (cardLed) cardLed.style.backgroundColor = isOn ? '#ff4d4d' : '#2ecc71';
+                            if (cardStatusText) {
+                                cardStatusText.innerText = isOn ? 'ĐANG MỞ' : 'ĐÃ ĐÓNG AN TOÀN';
+                                cardStatusText.style.color = isOn ? '#ff4d4d' : '#2ecc71';
+                            }
+                            if (cardBtn) {
+                                cardBtn.disabled = false;
+                                cardBtn.style.opacity = '1';
+                                cardBtn.innerText = isOn ? 'ĐÓNG CỔNG' : 'MỞ CỔNG';
+                                cardBtn.style.backgroundColor = isOn ? '#e74c3c' : '#2ecc71';
+                            }
+                        } else {
+                            const checkbox = document.getElementById(id);
+                            if (checkbox) checkbox.checked = isOn;
+                        }
                     });
+
                     isSyncing = false;
                     updateDeviceCount();
                 }
@@ -247,33 +347,127 @@ function connectMQTT() {
 }
 
 // ================================================================
-// 4. TRUYỀN TÍN HIỆU ĐIỀU KHIỂN THIẾT BỊ (Mã lệnh: DK01 -> DK16)
+// 4. TRUYỀN TÍN HIỆU ĐIỀU KHIỂN THIẾT BỊ (ĐÃ CẬP NHẬT MÃ LỆNH MỚI)
 // ================================================================
+
+// 4.1. Dành cho 9 thiết bị dạng SWITCH gạt thông thường (Bao gồm Mái che)
 function onControlChange(deviceId, state) {
     if (isSyncing) return; 
     const index = devices.indexOf(deviceId);
-    if (index < 0) return;
+    if (index < 0 || index === 9) return; 
 
-    const cmdNum = state ? (index + 1) : (index + 9);
-    const command = "DK" + cmdNum.toString().padStart(2, '0');
+    let command = "";
+
+    if (index === 8) {
+        command = state ? "DK17" : "DK18";
+    } else {
+        const cmdNum = state ? (index + 1) : (index + 9);
+        command = "DK" + cmdNum.toString().padStart(2, '0');
+    }
     
+    sendMqttCommand(command, index, deviceId, !state, 'switch');
+}
+
+// 4.2. Dành riêng cho CỔNG CHÍNH SERVO (Kích hoạt từ cả Trang chủ và Tab An Ninh Cổng)
+function onGateButtonClick(deviceId, index) {
+    if (isSyncing) return;
+    if (index !== 9) return;
+
+    const currentState = currentDeviceStates[index];
+    let command = (currentState === 0) ? "DK19" : "DK20";
+
+    sendMqttCommand(command, index, deviceId, currentState, 'button');
+}
+
+// 4.3. CHỨC NĂNG MỚI: GỬI LỆNH THAY ĐỔI MẬT KHẨU TỪ TAB XUỐNG SLAVE
+function changeGatePasswordMQTT() {
+    const oldPin = document.getElementById('input-old-pin').value.trim();
+    const newPin = document.getElementById('input-new-pin').value.trim();
+
+    if (oldPin.length < 4 || newPin.length < 4) {
+        alert("Mật khẩu phải đạt độ dài từ 4 đến 6 ký tự!");
+        return;
+    }
+    if (isNaN(oldPin) || isNaN(newPin)) {
+        alert("Mật khẩu bắt buộc phải là ký tự số (0-9)!");
+        return;
+    }
+
+    if (client && client.connected) {
+        // Đóng gói cấu trúc định dạng chuỗi: PASS:mật_khẩu_cũ,mật_khẩu_mới
+        const payloadStr = `PASS:${oldPin},${newPin}`;
+        
+        client.publish('esp32/commands', payloadStr, { qos: 1 });
+        console.log("👉 Đã phát lệnh cấu hình mật khẩu mật:", payloadStr);
+        
+        pushEventLog('Yêu cầu cấu hình', 'Đang truyền chuỗi khóa mật khẩu mới xuống phần cứng...', 'warning');
+        
+        document.getElementById('input-old-pin').value = '';
+        document.getElementById('input-new-pin').value = '';
+        
+        const logBox = document.getElementById('slave-gate-log-box');
+        if (logBox) {
+            logBox.innerText = '🔄 Đang gửi dữ liệu và đợi xác nhận phản hồi từ Slave...';
+            logBox.style.color = '#f1c40f'; 
+        }
+    } else {
+        alert("Mất kết nối MQTT Broker! Không thể cấu hình từ xa vào lúc này.");
+    }
+}
+
+// Hàm bổ trợ gửi lệnh tập trung để tránh lặp code
+function sendMqttCommand(command, index, deviceId, rollbackState, type) {
     if (client && client.connected) {
         client.publish('esp32/commands', command, { qos: 1 });
         console.log("Lệnh đẩy xuống thành công:", command);
         pushEventLog('Điều khiển thiết bị', `Yêu cầu hệ thống phát mã lệnh ${command} tới [${deviceLabels[index]}].`, 'info');
+        
+        // Cập nhật giả lập tức thời giao diện để tăng trải nghiệm nhạy bén
+        if (type === 'button') {
+            currentDeviceStates[index] = (currentDeviceStates[index] === 1) ? 0 : 1;
+            const isOn = (currentDeviceStates[index] === 1);
+            
+            // Đổi nhanh UI ở Trang chủ
+            const led = document.getElementById(`led-${deviceId}`);
+            const btn = document.querySelector(`#item-${deviceId} .btn-gate`);
+            if (led) led.style.backgroundColor = isOn ? '#ff4d4d' : '#2ecc71';
+            if (btn) btn.innerText = isOn ? 'ĐÓNG CỔNG' : 'MỞ CỔNG';
+
+            // Đổi nhanh UI ở Tab "An Ninh Cổng" mới (Hiển thị trạng thái chờ màu Vàng)
+            const cardLed = document.getElementById('card-gate-led');
+            const cardStatusText = document.getElementById('card-gate-status-text');
+            const cardBtn = document.getElementById('card-btn-gate-control');
+
+            if (cardStatusText) {
+                cardStatusText.innerText = isOn ? 'ĐANG MỞ...' : 'ĐANG ĐÓNG...';
+                cardStatusText.style.color = '#f1c40f';
+            }
+            if (cardLed) {
+                cardLed.style.backgroundColor = '#f1c40f';
+                cardLed.style.boxShadow = '0 0 10px rgba(241, 196, 15, 0.5)';
+            }
+            if (cardBtn) {
+                cardBtn.disabled = true;
+                cardBtn.style.opacity = '0.5';
+            }
+        }
     } else {
         alert("Lỗi phần cứng: Mất tín hiệu kết nối MQTT Broker!");
-        document.getElementById(deviceId).checked = !state; 
+        if (type === 'switch') {
+            document.getElementById(deviceId).checked = rollbackState; 
+        }
     }
     updateDeviceCount();
 }
 
 function updateDeviceCount() {
     const total = devices.length;
-    const active = devices.reduce((count, deviceId) => {
-        const checkbox = document.getElementById(deviceId);
-        return count + (checkbox && checkbox.checked ? 1 : 0);
-    }, 0);
+    let active = 0;
+
+    currentDeviceStates.forEach((state) => {
+        if (state === 1) active++;
+    });
+
     updateUI('device-count', `${active}/${total}`);
 }
 
@@ -389,19 +583,15 @@ function updateAlertBox(msg) {
     updateUI('alert-box', msg);
 }
 
-// YÊU CẦU MỚI: Reset thông số trang chính nhưng GIỮ NGUYÊN HOÀN TOÀN Tab Lịch sử
 function resetDashboardData() {
-    // 1. Chỉ xóa các thẻ hiển thị giá trị tức thời trên màn hình chính và trang con
     ['home-temp', 'home-humi', 'home-gas', 't-val', 'h-val', 'gas-val', 'light-val', 'rain-status'].forEach(id => updateUI(id, "--"));
     
     const periodElem = document.getElementById('day-night-status');
     if (periodElem) periodElem.innerText = "--";
     
     updateUI('home-camera-status', 'Offline');
-    updateHomeStatus('Mất kết nối: Quá 5s không nhận được dữ liệu từ ESP32.', 'danger');
+    updateHomeStatus('Mất kết nối: Quá 10s không nhận được dữ liệu từ ESP32.', 'danger');
     updateAlertBox("Hệ thống: Mất tín hiệu phần cứng ESP32 (Mất kết nối)");
-    
-    // Lưu ý: Không xóa hoặc can thiệp mảng `eventLogs`, giữ nguyên lịch sử cũ!
 }
 
 // ================================================================
