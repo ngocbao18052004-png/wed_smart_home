@@ -30,6 +30,7 @@
             <button class="tab-btn" data-target="security-card" data-label="An Ninh">An Ninh</button>
             <button class="tab-btn" data-target="history-card" data-label="Lịch sử">Lịch sử</button>
             <button class="tab-btn" data-target="alerts-card" data-label="Cảnh báo">Cảnh báo</button>
+            <button class="tab-btn" data-target="gate-security-panel" data-label="An Ninh Cổng">An Ninh Cổng</button>
             <button class="tab-btn" data-target="admin-panel" data-label="Quản Trị">Quản Trị</button>
         </div>
 
@@ -213,7 +214,7 @@
                 <h2>An Ninh & Camera</h2>
                 <div class="camera-container">
                     <iframe
-                        src="https://audio-handbags-notify-travels.trycloudflare.com"
+                        src="https://auburn-contractors-moms-dom.trycloudflare.com"
                         frameborder="0"
                         width="100%"
                         height="700"
@@ -246,7 +247,48 @@
                     <div class="alerts-empty">Hiện chưa có cảnh báo cấp bách.</div>
                 </div>
             </section>
+            <section class="card tab-panel" id="gate-security-panel">
+                <h2>🛡️ Trung Tâm Cấu Hình & An Ninh Cổng (Slave)</h2>
+                <p>Hệ thống quản lý trạng thái đóng/mở vật lý và thiết lập mã bảo mật RFID / Keypad.</p>
+                
+                <div class="admin-flex" style="margin-top: 15px;">
+                    
+                    <div class="admin-sub-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <h3>Bộ Điều Khiển Hành Trình</h3>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span id="card-gate-led" style="width: 14px; height: 14px; border-radius: 50%; display: inline-block; background-color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); transition: all 0.3s ease;"></span>
+                                <span style="color: #ccc; font-weight: 500;">Cửa vật lý:</span>
+                                <strong id="card-gate-status-text" style="color: #2ecc71; letter-spacing: 0.5px;">ĐÃ ĐÓNG AN TOÀN</strong>
+                            </div>
+                            
+                            <button id="card-btn-gate-control" class="btn" onclick="onGateButtonClick('dev10', 9)" style="background-color: #2ecc71; color: white; padding: 8px 16px; font-weight: bold; font-size: 0.85rem; border: none; cursor: pointer; border-radius: 4px; transition: all 0.2s;">
+                                MỞ CỔNG
+                            </button>
+                        </div>
 
+                        <div style="background: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 6px; border-left: 4px solid #3498db; min-height: 65px;">
+                            <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold; display: block; margin-bottom: 4px;">Thông điệp phần cứng gần nhất:</span>
+                            <div id="slave-gate-log-box" style="font-weight: 600; font-size: 0.9rem; color: #ecf0f1;">
+                                Hệ thống sẵn sàng
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-sub-card">
+                        <h3>Đổi Mã Pin Bàn Phím Cổng</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
+                            <input type="password" id="input-old-pin" placeholder="Nhập mật khẩu cũ (4-6 số)" maxlength="6">
+                            <input type="password" id="input-new-pin" placeholder="Nhập mật khẩu mới (4-6 số)" maxlength="6">
+                            <button class="btn btn-primary" onclick="changeGatePasswordMQTT()" style="background: #f39c12; border-color: #d35400; width: 100%; font-weight: bold;">
+                                🔄 CẬP NHẬT MẬT KHẨU MỚI ĐẾN SLAVE
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
             <section class="card admin-section tab-panel" id="admin-panel">
                 <h2>Quản Trị & Phân Quyền</h2>
                 <div class="admin-flex">
