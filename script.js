@@ -2,7 +2,13 @@
 // 1. CẤU HÌNH & BIẾN TOÀN CỤC (ĐỒNG BỘ THEO PAYLOAD MỚI)
 // ================================================================
 let eventLogs = [];
-const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+let currentUser = null;
+
+try {
+    currentUser = JSON.parse(localStorage.getItem('currentUser'));
+} catch (e) {
+    console.error("Lỗi đọc thông tin người dùng từ localStorage:", e);
+}
 
 if (!currentUser) {
     window.location.href = 'login.html';
@@ -10,9 +16,9 @@ if (!currentUser) {
 
 // Cấu hình Broker MQTT qua WebSocket Cloud
 const mqtt_url = 'wss://aecd780b1f264cadacf3a1ffb4c985d2.s1.eu.hivemq.cloud:8884/mqtt'; 
-const options = {
+const mqttOptions = {
     connectTimeout: 4000,
-    clientId: 'Web_Client_' + Math.random().toString(16).substr(2, 8),
+    clientId: 'Web_Client_' + Math.random().toString(16).substring(2, 10),
     username: 'SMART_3003',
     password: 'DOANTOTNGHIEP2025a',
 };
@@ -20,10 +26,11 @@ const options = {
 const MQTT_TOPICS = ['esp32/data', 'smartdoor/recognition/#', 'smartdoor/system/status'];
 const HISTORY_MAX_LOGS = 40;
 
-let dataTimeout; 
+let dataTimeout = null; 
 const TIMEOUT_MS = 10000; // Sau 10s không có dữ liệu -> Reset trang chính
 let isSyncing = false;
 let envChart = null;
+let calendarInterval = null;
 
 // Khai báo mảng trạng thái toàn cục của 10 thiết bị để đồng bộ giao diện linh hoạt
 let currentDeviceStates = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -47,18 +54,21 @@ const deviceLabels = [
 // 2. KHỞI TẠO HỆ THỐNG KHI TẢI TRANG
 // ================================================================
 function init() {
+    if (!currentUser) return;
+
     updateUI('display-name', `Chào, ${currentUser.username} (${currentUser.role})`);
 
     // Vẽ giao diện ban đầu (Sử dụng hàm render thông minh để tách biệt Switch và Button)
     renderDeviceUI(currentDeviceStates);
 
-    // Khởi chạy đồng hồ và lịch thực tế
+    // Khởi chạy đồng hồ và lịch thực tế (Xóa interval cũ nếu có để tránh trùng lặp)
+    if (calendarInterval) clearInterval(calendarInterval);
     updateRealTimeCalendar();
-    setInterval(updateRealTimeCalendar, 1000);
+    calendarInterval = setInterval(updateRealTimeCalendar, 1000);
 
     // Khởi tạo đồ thị môi trường Chart.js
     const chartCanvas = document.getElementById('envChart');
-    if (chartCanvas) {
+    if (chartCanvas && typeof Chart !== 'undefined') {
         envChart = new Chart(chartCanvas.getContext('2d'), {
             type: 'line',
             data: {
@@ -110,7 +120,8 @@ function init() {
         if (adminShortcut) adminShortcut.style.display = 'inline-block';
         if (adminTabBtn) adminTabBtn.style.display = 'inline-block';
         if (adminShortcut && adminTabBtn) {
-            adminShortcut.addEventListener('click', () => adminTabBtn.click());
+            // Tránh gán đè sự kiện nhiều lần lãng phí tài nguyên
+            adminShortcut.onclick = () => adminTabBtn.click();
         }
         updateUserTable();
     } else {
@@ -168,7 +179,7 @@ function renderDeviceUI(states) {
 // ================================================================
 // 3. XỬ LÝ NHẬN VÀ HIỂN THỊ DỮ LIỆU CẢM BIẾN TOÀN DIỆN
 // ================================================================
-const client = (typeof mqtt !== 'undefined') ? mqtt.connect(mqtt_url, options) : null;
+const client = (typeof mqtt !== 'undefined') ? mqtt.connect(mqtt_url, mqttOptions) : null;
 
 function connectMQTT() {
     if (!client) return;
@@ -205,7 +216,7 @@ function connectMQTT() {
 
             if (topic === 'esp32/data') {
                 // Xóa và thiết lập lại bộ đếm thời gian chờ
-                clearTimeout(dataTimeout);
+                if (dataTimeout) clearTimeout(dataTimeout);
                 dataTimeout = setTimeout(resetDashboardData, TIMEOUT_MS);
 
                 // [1] Hiển thị Nhiệt độ & Độ ẩm
@@ -454,7 +465,8 @@ function sendMqttCommand(command, index, deviceId, rollbackState, type) {
     } else {
         alert("Lỗi phần cứng: Mất tín hiệu kết nối MQTT Broker!");
         if (type === 'switch') {
-            document.getElementById(deviceId).checked = rollbackState; 
+            const checkbox = document.getElementById(deviceId);
+            if (checkbox) checkbox.checked = rollbackState; 
         }
     }
     updateDeviceCount();
@@ -480,10 +492,14 @@ function updateUI(id, value) {
 }
 
 function updateSensorData(temp, humi) {
-    updateUI('t-val', temp + "°C");
-    updateUI('h-val', humi + "%");
-    updateUI('home-temp', temp + "°C");
-    updateUI('home-humi', humi + "%");
+    // Ép kiểu dữ liệu về dạng số thực (float) để tránh dữ liệu lỗi từ chuỗi
+    const parsedTemp = parseFloat(temp);
+    const parsedHumi = parseFloat(humi);
+
+    updateUI('t-val', parsedTemp + "°C");
+    updateUI('h-val', parsedHumi + "%");
+    updateUI('home-temp', parsedTemp + "°C");
+    updateUI('home-humi', parsedHumi + "%");
     
     if (envChart) {
         const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
@@ -493,8 +509,8 @@ function updateSensorData(temp, humi) {
             envChart.data.datasets[1].data.shift();
         }
         envChart.data.labels.push(now);
-        envChart.data.datasets[0].data.push(temp);
-        envChart.data.datasets[1].data.push(humi);
+        envChart.data.datasets[0].data.push(parsedTemp);
+        envChart.data.datasets[1].data.push(parsedHumi);
         envChart.update();
     }
 }
@@ -604,8 +620,9 @@ function updateRealTimeCalendar() {
     const monthElem = document.querySelector('.calendar-month');
     if (monthElem) monthElem.innerText = monthYearStr;
 
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const fullDateStr = now.toLocaleDateString('vi-VN', options);
+    // Định nghĩa cục bộ để tránh ghi đè biến cấu hình MQTT options bên trên
+    const localeOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const fullDateStr = now.toLocaleDateString('vi-VN', localeOptions);
     const dayNameElem = document.querySelector('.calendar-day-name');
     if (dayNameElem) dayNameElem.innerText = fullDateStr;
 
@@ -633,7 +650,13 @@ function updateUserTable() {
     const tbody = document.getElementById('user-table-body');
     if (!tbody) return;
 
-    const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    let accounts = [];
+    try {
+        accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    } catch (e) {
+        console.error("Lỗi parse mảng dữ liệu accounts:", e);
+    }
+
     tbody.innerHTML = accounts.map(acc => `
         <tr>
             <td>${acc.username}</td>
@@ -655,7 +678,13 @@ function updateAdminProfile() {
         return;
     }
 
-    let accounts = JSON.parse(localStorage.getItem('accounts'));
+    let accounts = [];
+    try {
+        accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    } catch (e) {
+        console.error(e);
+    }
+
     let adminAcc = accounts.find(acc => acc.username === currentUser.username);
     if (adminAcc) {
         adminAcc.username = newU;
@@ -678,7 +707,13 @@ function addNewUser() {
         return;
     }
 
-    let accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    let accounts = [];
+    try {
+        accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    } catch (e) {
+        accounts = [];
+    }
+
     if (accounts.some(acc => acc.username === u)) {
         alert("Tên tài khoản này đã tồn tại!");
         return;
@@ -695,7 +730,12 @@ function addNewUser() {
 function deleteUser(username) {
     if (username === 'admin') return;
     if (confirm(`Bạn có chắc chắn muốn xóa tài khoản [${username}]?`)) {
-        let accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+        let accounts = [];
+        try {
+            accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+        } catch (e) {
+            accounts = [];
+        }
         accounts = accounts.filter(acc => acc.username !== username);
         localStorage.setItem('accounts', JSON.stringify(accounts));
         updateUserTable();
