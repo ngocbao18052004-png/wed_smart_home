@@ -1,23 +1,30 @@
-/* ===== BIẾN MÀU SẮC MỚI (DARK BLUE THEME) ===== */
+/* ===== BIẾN MÀU SẮC MỚI (PREMIUM LIGHT TECH UI) ===== */
 :root {
-    /* Giữ nguyên tên biến nhưng đổi mã màu */
-    --primary-color: #00d2ff;    /* Xanh Cyan sáng */
-    --accent-color: #3a7bd5;     /* Xanh dương hiện đại */
-    --danger-color: #ff4757;     /* Đỏ neon */
-    --warning-color: #ffa502;    /* Cam neon */
-    --info-color: #1e90ff;       /* Blue */
+    /* Giữ nguyên tên biến gốc nhưng đổi sang hệ màu sáng công nghệ cực đẹp */
+    --primary-color: #0284c7;    /* Xanh biển công nghệ tươi sáng */
+    --accent-color: #3b82f6;     /* Xanh tương tác hiện đại */
+    --danger-color: #dc2626;     /* Đỏ đô sắc nét, hiển thị rõ ràng */
+    --warning-color: #d97706;    /* Vàng cam hổ phách */
+    --info-color: #0369a1;       /* Xanh biển đậm phân cấp */
 
-    --bg-color: #060d17;         /* Nền tối sâu */
-    --card-bg: rgba(255, 255, 255, 0.05); /* Card trong suốt nhẹ */
-    --text-color: #ffffff;       /* Chữ trắng cho nền tối */
+    --bg-color: #f3f6fa;         /* Nền sáng mịn màng */
+    /* Nền trắng kính trong suốt cao cấp đặt trên nền xám khói */
+    --card-bg: rgba(255, 255, 255, 0.82); 
+    --text-color: #1e293b;       /* Chữ xanh đen than sắc nét, dễ đọc */
 
     --border-radius: 12px;
+    --line-color: rgba(2, 132, 199, 0.12); /* Đường viền mảnh sạch sẽ */
+    --shadow-premium: 0 12px 30px rgba(15, 23, 42, 0.05); /* Đổ bóng mịn hiện đại */
 }
 
 /* ===== GLOBAL ===== */
 body {
     font-family: 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at top, #0a192f 0%, #060d17 100%);
+    /* Hiệu ứng gradient sáng mịn màng đồng bộ toàn hệ thống */
+    background: 
+        radial-gradient(circle at top left, rgba(2, 132, 199, 0.08), transparent 24%),
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.06), transparent 28%),
+        linear-gradient(145deg, #f8fafc 0%, #f1f5f9 48%, #e2e8f0 100%);
     color: var(--text-color);
     margin: 0;
     min-height: 100vh;
@@ -32,11 +39,11 @@ body {
 }
 .login-card {
     background: var(--card-bg);
-    backdrop-filter: blur(10px); /* Hiệu ứng kính */
+    backdrop-filter: blur(14px); /* Nâng cấp hiệu ứng kính mịn hơn */
     padding: 40px;
     border-radius: var(--border-radius);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    border: 1px solid var(--line-color);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
     width: 350px;
     text-align: center;
 }
@@ -44,10 +51,15 @@ body {
     width: 100%;
     padding: 12px;
     margin: 10px 0;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #ffffff;
+    border: 1px solid var(--line-color);
     border-radius: 6px;
-    color: white;
+    color: var(--text-color);
+}
+.login-card input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
 }
 
 /* ===== DASHBOARD ===== */
@@ -62,13 +74,13 @@ header {
     justify-content: space-between;
     align-items: center;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--line-color);
     margin-bottom: 20px;
 }
 
 .breadcrumb {
     font-size: 0.95rem;
-    color: rgba(255,255,255,0.7);
+    color: var(--muted, #64748b);
     margin-bottom: 16px;
 }
 
@@ -76,15 +88,17 @@ header {
     margin-left: 12px;
     padding: 8px 14px;
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.08);
-    color: white;
+    border: 1px solid var(--line-color);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--text-color);
     cursor: pointer;
-    transition: 0.25s;
+    transition: 0.25s ease;
 }
 
 .admin-shortcut:hover {
-    background: rgba(0,210,255,0.15);
+    background: rgba(2, 132, 199, 0.08);
+    color: var(--primary-color);
+    border-color: rgba(2, 132, 199, 0.3);
 }
 
 .header-brand {
@@ -96,7 +110,7 @@ header {
 .logo-header {
     height: 45px;
     width: auto;
-    filter: drop-shadow(0 0 5px var(--primary-color));
+    filter: drop-shadow(0 2px 8px rgba(2, 132, 199, 0.2)); /* Đổ bóng logo sáng dịu nhẹ */
 }
 
 .header-brand h1 {
@@ -125,12 +139,13 @@ header {
 }
 
 .alert-pill {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: #d0f6ff;
+    background: rgba(2, 132, 199, 0.06);
+    border: 1px solid var(--line-color);
+    color: var(--info-color);
     padding: 12px 16px;
     border-radius: 14px;
     white-space: nowrap;
+    font-weight: 600;
 }
 
 .home-summary-grid {
@@ -141,23 +156,25 @@ header {
 }
 
 .home-pill {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--line-color);
     border-radius: 14px;
     padding: 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
+    box-shadow: var(--shadow-premium);
 }
 
 .home-pill span {
     font-size: 0.9rem;
-    color: rgba(255,255,255,0.7);
+    color: #64748b;
 }
 
 .home-pill strong {
     font-size: 1.3rem;
+    color: var(--text-color);
 }
 
 .home-main-grid {
@@ -168,10 +185,11 @@ header {
 }
 
 .home-card-small {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid var(--line-color);
     border-radius: 16px;
     padding: 18px;
+    box-shadow: var(--shadow-premium);
 }
 
 .home-card-title {
@@ -180,10 +198,11 @@ header {
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--text-color);
 }
 
 .home-subtitle {
-    color: rgba(255,255,255,0.75);
+    color: #64748b;
     margin: 6px 0 0;
 }
 
@@ -196,15 +215,16 @@ header {
 
 .device-setup-panel {
     margin-top: 20px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--line-color);
     border-radius: 14px;
     padding: 18px;
+    box-shadow: var(--shadow-premium);
 }
 
 .device-setup-panel p {
     margin: 0;
-    color: rgba(255,255,255,0.78);
+    color: var(--text-color);
 }
 
 .device-setup-block {
@@ -217,9 +237,9 @@ header {
     width: 100%;
     padding: 10px 12px;
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05);
-    color: white;
+    border: 1px solid var(--line-color);
+    background: #ffffff;
+    color: var(--text-color);
 }
 
 .device-setup-block button {
@@ -227,9 +247,13 @@ header {
 }
 
 .btn-secondary {
-    background: rgba(255,255,255,0.08);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.12);
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    color: #475569;
+    border: 1px solid var(--line-color);
+    box-shadow: none;
+}
+.btn-secondary:hover {
+    background: #e2e8f0;
 }
 
 .home-welcome {
@@ -254,17 +278,19 @@ header {
 .calendar-month {
     font-size: 0.95rem;
     letter-spacing: 1px;
-    opacity: 0.75;
+    opacity: 0.8;
+    color: #64748b;
 }
 
 .calendar-day-name {
     font-size: 1.4rem;
     font-weight: 700;
     margin-top: 6px;
+    color: var(--text-color);
 }
 
 .calendar-lunar {
-    color: rgba(255,255,255,0.75);
+    color: #64748b;
 }
 
 .calendar-grid-real {
@@ -282,36 +308,44 @@ header {
 }
 
 .day-name {
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.7);
+    background: rgba(15, 23, 42, 0.04);
+    color: #64748b;
     font-size: 0.82rem;
 }
 
 .day {
-    background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.9);
-    transition: 0.2s;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(2, 132, 199, 0.05);
+    color: var(--text-color);
+    transition: 0.2s ease;
 }
 
 .day:hover {
-    background: rgba(255,255,255,0.1);
+    background: #ffffff;
+    border-color: var(--primary-color);
+    transform: translateY(-2px); /* Hiệu ứng nổi nhẹ khi di chuột */
 }
 
 .day.inactive {
-    color: rgba(255,255,255,0.45);
+    color: #cbd5e1;
+    background: rgba(15, 23, 42, 0.01);
+    border-color: transparent;
 }
 
+/* Nâng cấp hiệu ứng ngày hiện tại dạng Light UI cực sang */
 .day.today {
-    background: linear-gradient(135deg, #00d2ff, #3a7bd5);
-    color: #060d17;
-    box-shadow: 0 10px 25px rgba(0, 210, 255, 0.2);
+    background: linear-gradient(135deg, #3b82f6, #0284c7);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(2, 132, 199, 0.2);
+    border-color: transparent;
 }
 
 .calendar-notes {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--line-color);
     border-radius: 16px;
     padding: 18px;
+    box-shadow: var(--shadow-premium);
 }
 
 .calendar-future {
@@ -321,10 +355,11 @@ header {
 }
 
 .future-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--line-color);
     border-radius: 14px;
     padding: 16px;
+    box-shadow: var(--shadow-premium);
 }
 
 .future-label {
@@ -334,28 +369,32 @@ header {
 }
 
 .future-text {
-    color: rgba(255,255,255,0.8);
+    color: var(--text-color);
     font-size: 0.95rem;
 }
 
 .tab-btn {
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
+    border: 1px solid var(--line-color);
+    background: rgba(255, 255, 255, 0.6);
+    color: #64748b;
     padding: 10px 18px;
     border-radius: 10px;
     cursor: pointer;
-    transition: 0.25s;
+    font-weight: 600;
+    transition: 0.25s ease;
 }
 
 .tab-btn:hover {
-    background: rgba(0, 210, 255, 0.12);
+    background: rgba(2, 132, 199, 0.08);
+    color: var(--primary-color);
 }
 
+/* Tab active đồng bộ tone xanh trắng sáng */
 .tab-btn.active {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    color: #060d17;
+    background: linear-gradient(135deg, #3b82f6, var(--primary-color));
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.15);
 }
 
 .cards-grid {
@@ -379,15 +418,16 @@ header {
 }
 
 .summary-card {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid var(--line-color);
     padding: 16px;
     border-radius: 16px;
+    box-shadow: var(--shadow-premium);
 }
 
 .summary-title {
     font-size: 0.9rem;
-    color: rgba(255,255,255,0.75);
+    color: #64748b;
     margin-bottom: 10px;
 }
 
@@ -395,10 +435,11 @@ header {
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 6px;
+    color: var(--text-color);
 }
 
 .summary-note {
-    color: rgba(255,255,255,0.72);
+    color: #64748b;
     font-size: 0.95rem;
 }
 
@@ -415,32 +456,13 @@ header {
     gap: 15px;
 }
 
-.calendar-month {
-    font-size: 1rem;
-    color: var(--text-color);
-    opacity: 0.75;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.calendar-day-name {
-    font-size: 1.55rem;
-    font-weight: 700;
-    margin-top: 6px;
-}
-
-.calendar-lunar {
-    font-size: 0.95rem;
-    color: rgba(255,255,255,0.75);
-}
-
 .calendar-today-box {
     min-width: 110px;
     padding: 18px;
     text-align: center;
     border-radius: 16px;
-    background: rgba(0, 210, 255, 0.08);
-    border: 1px solid rgba(0, 210, 255, 0.15);
+    background: rgba(2, 132, 199, 0.06);
+    border: 1px solid rgba(2, 132, 199, 0.15);
 }
 
 .calendar-today-box span {
@@ -453,79 +475,8 @@ header {
 .calendar-today-box small {
     display: block;
     margin-top: 4px;
-    color: rgba(255,255,255,0.8);
-}
-
-.calendar-grid-real {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
-}
-
-.day-name,
-.day {
-    padding: 12px;
-    border-radius: 12px;
-    text-align: center;
+    color: #475569;
     font-weight: 600;
-}
-
-.day-name {
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.7);
-    text-transform: uppercase;
-    font-size: 0.82rem;
-}
-
-.day {
-    background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.9);
-    transition: 0.2s;
-}
-
-.day:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-.day.inactive {
-    color: rgba(255,255,255,0.45);
-}
-
-.day.today {
-    background: linear-gradient(135deg, #00d2ff, #3a7bd5);
-    color: #060d17;
-    box-shadow: 0 10px 25px rgba(0, 210, 255, 0.2);
-}
-
-.calendar-notes {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 18px;
-}
-
-.calendar-future {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-}
-
-.future-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 14px;
-    padding: 16px;
-}
-
-.future-label {
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 8px;
-}
-
-.future-text {
-    color: rgba(255,255,255,0.8);
-    font-size: 0.95rem;
 }
 
 .note-title {
@@ -541,6 +492,7 @@ header {
     gap: 12px;
     margin-bottom: 10px;
     font-size: 0.95rem;
+    color: var(--text-color);
 }
 
 .note-item:last-child {
@@ -554,63 +506,67 @@ header {
     display: inline-block;
 }
 
-.note-good { background: #2ecc71; }
-.note-warning { background: #ffa502; }
-.note-info { background: #1e90ff; }
+.note-good { background: #16a34a; }
+.note-warning { background: #d97706; }
+.note-info { background: #0284c7; }
 
+/* Nâng cấp hiệu ứng Card kính viền phản quang thông minh */
 .card {
     background: var(--card-bg);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     padding: 20px;
     border-radius: var(--border-radius);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-    transition: 0.3s;
+    border: 1px solid var(--line-color);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-    transform: translateY(-3px);
-    border-color: var(--primary-color);
+    transform: translateY(-4px); /* Nâng cao lên một chút nhìn mượt hơn */
+    border-color: rgba(2, 132, 199, 0.3);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
 
 .card h2 {
     font-size: 1.1rem;
     margin-top: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--line-color);
     padding-bottom: 10px;
     color: var(--primary-color);
+    font-weight: 700;
 }
 
 /* ===== SENSOR ===== */
 .sensor-item {
     text-align: center;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(15, 23, 42, 0.02);
     padding: 12px;
     border-radius: 8px;
-    transition: 0.3s;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: 0.3s ease;
+    border: 1px solid var(--line-color);
 }
 
 .sensor-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: #ffffff;
+    border-color: var(--line-color);
+    box-shadow: var(--shadow-premium);
 }
 
 .sensor-value {
     font-size: 20px;
     font-weight: bold;
-    text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
 }
 
-/* Màu theo loại */
+/* Màu chữ hiển thị thông số cảm biến sạch, rõ nét */
 .temp { color: var(--danger-color); }
 .humi { color: var(--info-color); }
 .gas { color: var(--warning-color); }
-.light { color: #e056fd; }
+.light { color: #9333ea; }
 
 /* ===== AIR STATUS ===== */
-.good { color: #2ecc71; }
-.warning { color: var(--warning-color); }
-.danger { color: var(--danger-color); }
+.good { color: #16a34a; font-weight: 700; }
+.warning { color: var(--warning-color); font-weight: 700; }
+.danger { color: var(--danger-color); font-weight: 700; }
 
 /* ===== SWITCH ===== */
 .control-item {
@@ -618,7 +574,8 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--line-color);
+    color: var(--text-color);
 }
 
 .switch {
@@ -629,13 +586,14 @@ header {
 
 .switch input { opacity: 0; width: 0; height: 0; }
 
+/* Thanh trượt công tắc thông minh phong cách Modern iOS UI */
 .slider {
     position: absolute;
     cursor: pointer;
-    background: #2c3e50;
+    background: #cbd5e1;
     border-radius: 24px;
     top: 0; left: 0; right: 0; bottom: 0;
-    transition: 0.4s;
+    transition: 0.3s;
 }
 
 .slider:before {
@@ -647,11 +605,12 @@ header {
     bottom: 3px;
     background: white;
     border-radius: 50%;
-    transition: 0.4s;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 input:checked + .slider {
-    background: linear-gradient(to right, #00d2ff, #3a7bd5);
+    background: linear-gradient(135deg, #3b82f6, #0284c7);
 }
 
 input:checked + .slider:before {
@@ -660,13 +619,14 @@ input:checked + .slider:before {
 
 /* ===== ALERT BOX ===== */
 .alert-box {
-    background: #1c2e4a;
+    background: rgba(217, 119, 6, 0.08);
     color: var(--warning-color);
     padding: 12px;
     margin-top: 10px;
     border-radius: 5px;
     border-left: 4px solid var(--warning-color);
     font-family: monospace;
+    font-weight: 600;
 }
 
 .history-log,
@@ -678,46 +638,53 @@ input:checked + .slider:before {
 
 .history-entry,
 .alert-entry {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--line-color);
     border-radius: 12px;
     padding: 12px;
+    box-shadow: var(--shadow-premium);
+    color: var(--text-color);
 }
 
 .history-entry.safe,
 .alert-entry.safe {
-    border-color: #22c55e;
+    border-left: 4px solid #16a34a;
+    background: #f0fdf4;
 }
 
 .history-entry.warning,
 .alert-entry.warning {
-    border-color: var(--warning-color);
+    border-left: 4px solid var(--warning-color);
+    background: #fffbeb;
 }
 
 .history-entry.danger,
 .alert-entry.danger {
-    border-color: var(--danger-color);
+    border-left: 4px solid var(--danger-color);
+    background: #fef2f2;
 }
 
 .history-entry .history-time,
 .alert-entry .alert-time {
     font-size: 0.8rem;
-    color: rgba(255,255,255,0.7);
+    color: #64748b;
     margin-bottom: 4px;
+    font-weight: 600;
 }
 
 .history-empty,
 .alerts-empty {
-    color: rgba(255,255,255,0.75);
+    color: #64748b;
     font-size: 0.95rem;
 }
 
 .mqtt-debug-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--line-color);
     border-radius: 14px;
     padding: 14px;
     margin-top: 14px;
+    box-shadow: var(--shadow-premium);
 }
 
 .mqtt-debug-title {
@@ -731,13 +698,13 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    color: rgba(255,255,255,0.9);
+    color: var(--text-color);
     font-size: 0.95rem;
     margin-bottom: 6px;
 }
 
 .mqtt-debug-row span {
-    color: #ffffff;
+    color: var(--text-color);
     font-weight: 700;
 }
 
@@ -745,18 +712,19 @@ input:checked + .slider:before {
 #stream {
     width: 100%;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: #000;
+    border: 1px solid var(--line-color);
+    background: #f1f5f9;
 }
 
 /* ===== ADMIN ===== */
 .admin-sub-card {
     flex: 1;
     min-width: 300px;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(15, 23, 42, 0.02);
     padding: 15px;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line-color);
+    color: var(--text-color);
 }
 
 table {
@@ -764,42 +732,66 @@ table {
     border-collapse: collapse;
     margin-top: 10px;
     background: transparent;
-    color: white;
+    color: var(--text-color);
 }
 
 th, td {
     padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--line-color);
     font-size: 14px;
     text-align: left;
 }
 
 th {
     color: var(--primary-color);
+    font-weight: 700;
+    background: rgba(2, 132, 199, 0.04); /* Thêm nền tiêu đề bảng nhẹ nhàng lịch sự */
 }
 
-/* ===== BUTTON ===== */
+td {
+    color: var(--text-color);
+}
+
+tr:hover {
+    background: rgba(15, 23, 42, 0.01);
+}
+
+/* ===== BUTTON (Hiệu ứng nâng cấp tương tác cực đã) ===== */
 .btn {
     padding: 8px 15px;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 5px;
     cursor: pointer;
     color: white;
     font-weight: bold;
-    transition: 0.3s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:active {
+    transform: scale(0.96); /* Hiệu ứng lún nút khi nhấn chuột thực tế */
 }
 
 .btn-primary { 
-    background: linear-gradient(to right, #00d2ff, #3a7bd5); 
-    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.2);
+    background: linear-gradient(135deg, #3b82f6, #0284c7); 
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
 }
 .btn-primary:hover {
-    box-shadow: 0 4px 20px rgba(0, 210, 255, 0.4);
-    transform: scale(1.05);
+    background: var(--primary-color);
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.25);
 }
 
-.btn-danger { background: var(--danger-color); }
-.btn-edit { background: var(--info-color); }
+.btn-danger { 
+    background: var(--danger-color); 
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+}
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.btn-edit { 
+    background: var(--info-color); 
+    box-shadow: 0 4px 12px rgba(3, 105, 161, 0.15);
+}
 
 .future-grid {
     display: grid;
@@ -812,9 +804,10 @@ th {
     display: block;
     font-size: 1rem;
     margin-bottom: 8px;
+    color: var(--text-color);
 }
 
 .future-card span {
-    color: rgba(255,255,255,0.75);
+    color: #64748b;
     font-size: 0.95rem;
 }
