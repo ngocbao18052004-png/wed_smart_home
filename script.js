@@ -341,6 +341,18 @@ function connectMQTT() {
                 updateUI('home-camera-status', 'Online');
                 updateAlertBox(`✅ Người quen xuất hiện: ${name}`);
                 pushEventLog('Nhận diện khuôn mặt', `Thành viên [${name}] quét thực thể mở khóa thành công.`, 'safe');
+                if (client && client.connected)
+                {
+                    client.publish(
+                        'esp32/commands',
+                        'DK19',
+                        { qos: 1 }
+                    );
+
+                    console.log(
+                        '[AI] Người quen được nhận diện -> Gửi DK19 mở cổng'
+                    );
+                }
             }
             else if (topic === 'smartdoor/recognition/unknown') {
                 updateAlertBox(`🚨 CẢNH BÁO: Phát hiện người lạ trước nhà!`);
